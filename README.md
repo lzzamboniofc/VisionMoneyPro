@@ -4,39 +4,38 @@ VisionMoneyPro é a nova base comercial do projeto financeiro, criada separadame
 
 ## Estado atual
 
-- Next.js + TypeScript
-- Export estático compatível com GitHub Pages
-- Interface inicial responsiva
-- Login/cadastro preparado para Supabase no navegador
-- Dashboard inicial
+- Next.js + TypeScript mantido como base futura da aplicação
+- Prévia estática do produto em `/docs`
+- Interface responsiva
+- Landing page, acesso e dashboard demonstrativo
 - Arquitetura multi-tenant baseada em `workspaces`
-- Workflow automático do GitHub Pages em `.github/workflows/pages.yml`
 
-## GitHub Pages
+## GitHub Pages — modo simples
 
-O deploy é feito automaticamente pelo GitHub Actions a cada push na `main`.
+O GitHub Pages serve diretamente a pasta `/docs` da branch `main`.
 
-URL esperada:
+Configure em:
+
+**Settings → Pages → Build and deployment → Source: Deploy from a branch**
+
+Depois selecione:
+
+- Branch: `main`
+- Folder: `/docs`
+
+URL:
 
 `https://lzzamboniofc.github.io/VisionMoneyPro/`
 
+Esse modelo não depende de GitHub Actions.
+
+## Aplicação completa
+
+O código Next.js na raiz continua sendo a base para evoluirmos o produto. O diretório `/docs` funciona como publicação estática simples enquanto a infraestrutura de backend é preparada.
+
 ## Supabase
 
-Quando o projeto Supabase exclusivo do VisionMoneyPro estiver disponível, adicione em **Settings → Secrets and variables → Actions → Variables**:
-
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-
-Depois configure no Supabase Auth a URL do GitHub Pages entre as URLs permitidas de redirecionamento.
-
-## Desenvolvimento local
-
-```bash
-npm install
-npm run dev
-```
-
-Use `.env.example` como referência para `.env.local`.
+O cadastro real será ativado quando conectarmos um projeto Supabase exclusivo do VisionMoneyPro.
 
 ## Arquitetura
 
