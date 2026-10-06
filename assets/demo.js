@@ -6,6 +6,8 @@
   const BUDGETS_KEY = "vmp_demo_budgets";
   const GOALS_KEY = "vmp_demo_goals";
   const CONTRIBUTIONS_KEY = "vmp_demo_goal_contributions";
+  const CARDS_KEY = "vmp_demo_cards";
+  const PAYABLES_KEY = "vmp_demo_payables";
 
   const safeParse = (value, fallback = null) => {
     try { return value ? JSON.parse(value) : fallback; } catch { return fallback; }
@@ -22,6 +24,7 @@
   };
 
   const currentDate = () => new Date().toISOString().slice(0, 10);
+  const currentMonth = () => currentDate().slice(0, 7);
 
   const expenseCategories = [
     "Moradia", "Alimentação", "Transporte", "Saúde", "Educação",
@@ -43,6 +46,15 @@
     localStorage.setItem(key, JSON.stringify(Array.isArray(items) ? items : []));
   }
 
+  function getArray(key) {
+    const value = safeParse(localStorage.getItem(key), []);
+    return Array.isArray(value) ? value : [];
+  }
+
+  function saveArray(key, value) {
+    localStorage.setItem(key, JSON.stringify(Array.isArray(value) ? value : []));
+  }
+
   function normalizeTransaction(kind, input, existingId) {
     const categoryList = kind === "income" ? incomeCategories : expenseCategories;
     const date = String(input?.date || currentDate()).slice(0, 10);
@@ -50,7 +62,7 @@
       ? String(input.category)
       : categoryList[0];
 
-    return {
+    const base = {
       id: existingId || newId(),
       description: String(input?.description || "").trim().slice(0, 180),
       amount: normalizeMoney(input?.amount),
@@ -60,12 +72,48 @@
       createdAt: input?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
+
+    if (kind === "expense") {
+      const cardId = String(input?.cardId || "").trim();
+      const validCard = cardId && getArray(CARDS_KEY).some(card => card.id === cardId);
+      base.paymentMethod = validCard ? "credit" : String(input?.paymentMethod || "debit").slice(0, 30);
+      base.cardId = validCard ? cardId : "";
+    }
+
+    return base;
   }
 
   function monthKey(dateLike = new Date()) {
     const date = dateLike instanceof Date ? dateLike : new Date(dateLike + "T12:00:00");
-    if (Number.isNaN(date.getTime())) return currentDate().slice(0, 7);
+    if (Number.isNaN(date.getTime())) return currentMonth();
     return date.toISOString().slice(0, 7);
+  }
+
+  function addMonthsToMonth(month, offset) {
+    const [year, mon] = String(month).split("-").map(Number);
+    const date = new Date(year, (mon || 1) - 1 + offset, 1, 12);
+    return date.toISOString().slice(0, 7);
+  }
+
+  function lastDayOfMonth(year, monthIndex) {
+    return new Date(year, monthIndex + 1, 0, 12).getDate();
+  }
+
+  function cardBillMonthForExpense(expense, card) {
+    const [year, month, day] = String(expense.date || currentDate()).split("-").map(Number);
+    const closingDay = Number(card?.closingDay || 1);
+    const dueDay = Number(card?.dueDay || 1);
+    const baseMonth = `${year}-${String(month).padStart(2, "0")}`;
+
+    let offset = dueDay <= closingDay ? 1 : 0;
+    if (day > closingDay) offset += 1;
+    return addMonthsToMonth(baseMonth, offset);
+  }
+
+  function dueDateForBillMonth(month, dueDay) {
+    const [year, mon] = String(month).split("-").map(Number);
+    const last = lastDayOfMonth(year, mon - 1);
+    return `${year}-${String(mon).padStart(2, "0")}-${String(Math.min(Number(dueDay || 1), last)).padStart(2, "0")}`;
   }
 
   window.VisionMoneyProDemo = {
@@ -136,7 +184,7 @@
       return after.length !== before.length;
     },
 
-    getMonthSummary(month = currentDate().slice(0, 7)) {
+    getMonthSummary(month = currentMonth()) {
       const expenses = getCollection("expense").filter(item => String(item.date).slice(0, 7) === month);
       const incomes = getCollection("income").filter(item => String(item.date).slice(0, 7) === month);
       const expenseTotal = expenses.reduce((sum, item) => sum + Number(item.amount || 0), 0);
@@ -152,20 +200,18 @@
       };
     },
 
-    getBudgets(month = currentDate().slice(0, 7)) {
-      const items = safeParse(localStorage.getItem(BUDGETS_KEY), []);
-      return (Array.isArray(items) ? items : [])
+    getBudgets(month = currentMonth()) {
+      return getArray(BUDGETS_KEY)
         .filter(item => item.month === month)
         .sort((a, b) => String(a.category).localeCompare(String(b.category), "pt-BR"));
     },
 
-    upsertBudget(category, amount, month = currentDate().slice(0, 7)) {
+    upsertBudget(category, amount, month = currentMonth()) {
       const value = normalizeMoney(amount);
       if (!(value > 0)) throw new Error("budget_amount_required");
       if (!expenseCategories.includes(category)) throw new Error("invalid_category");
 
-      const items = safeParse(localStorage.getItem(BUDGETS_KEY), []);
-      const budgets = Array.isArray(items) ? items : [];
+      const budgets = getArray(BUDGETS_KEY);
       const index = budgets.findIndex(item => item.month === month && item.category === category);
       const record = {
         id: index >= 0 ? budgets[index].id : newId(),
@@ -177,19 +223,16 @@
 
       if (index >= 0) budgets[index] = record;
       else budgets.push(record);
-      localStorage.setItem(BUDGETS_KEY, JSON.stringify(budgets));
+      saveArray(BUDGETS_KEY, budgets);
       return record;
     },
 
-    removeBudget(category, month = currentDate().slice(0, 7)) {
-      const items = safeParse(localStorage.getItem(BUDGETS_KEY), []);
-      const budgets = Array.isArray(items) ? items : [];
-      localStorage.setItem(BUDGETS_KEY, JSON.stringify(
-        budgets.filter(item => !(item.month === month && item.category === category))
-      ));
+    removeBudget(category, month = currentMonth()) {
+      const budgets = getArray(BUDGETS_KEY);
+      saveArray(BUDGETS_KEY, budgets.filter(item => !(item.month === month && item.category === category)));
     },
 
-    getCategorySpend(month = currentDate().slice(0, 7)) {
+    getCategorySpend(month = currentMonth()) {
       const totals = Object.fromEntries(expenseCategories.map(category => [category, 0]));
       getCollection("expense")
         .filter(item => String(item.date).slice(0, 7) === month)
@@ -200,8 +243,7 @@
     },
 
     getGoals() {
-      const items = safeParse(localStorage.getItem(GOALS_KEY), []);
-      return (Array.isArray(items) ? items : []).slice().sort((a, b) =>
+      return getArray(GOALS_KEY).slice().sort((a, b) =>
         Number(a.completed) - Number(b.completed) ||
         String(a.targetDate || "9999-12-31").localeCompare(String(b.targetDate || "9999-12-31"))
       );
@@ -212,8 +254,7 @@
     },
 
     upsertGoal(input, id = null) {
-      const items = safeParse(localStorage.getItem(GOALS_KEY), []);
-      const goals = Array.isArray(items) ? items : [];
+      const goals = getArray(GOALS_KEY);
       const index = id ? goals.findIndex(goal => goal.id === id) : -1;
       const current = index >= 0 ? goals[index] : null;
       const name = String(input?.name || "").trim().slice(0, 100);
@@ -233,17 +274,13 @@
 
       if (index >= 0) goals[index] = goal;
       else goals.push(goal);
-      localStorage.setItem(GOALS_KEY, JSON.stringify(goals));
+      saveArray(GOALS_KEY, goals);
       return goal;
     },
 
     removeGoal(id) {
-      const goals = this.getGoals().filter(goal => goal.id !== id);
-      localStorage.setItem(GOALS_KEY, JSON.stringify(goals));
-      const contributions = safeParse(localStorage.getItem(CONTRIBUTIONS_KEY), []);
-      localStorage.setItem(CONTRIBUTIONS_KEY, JSON.stringify(
-        (Array.isArray(contributions) ? contributions : []).filter(item => item.goalId !== id)
-      ));
+      saveArray(GOALS_KEY, this.getGoals().filter(goal => goal.id !== id));
+      saveArray(CONTRIBUTIONS_KEY, getArray(CONTRIBUTIONS_KEY).filter(item => item.goalId !== id));
     },
 
     setGoalCompleted(id, completed) {
@@ -253,8 +290,7 @@
     },
 
     getGoalContributions(goalId = null) {
-      const items = safeParse(localStorage.getItem(CONTRIBUTIONS_KEY), []);
-      return (Array.isArray(items) ? items : [])
+      return getArray(CONTRIBUTIONS_KEY)
         .filter(item => !goalId || item.goalId === goalId)
         .sort((a, b) => String(b.date).localeCompare(String(a.date)));
     },
@@ -263,7 +299,7 @@
       if (!this.getGoal(goalId)) throw new Error("goal_not_found");
       const value = normalizeMoney(amount);
       if (!(value > 0)) throw new Error("contribution_amount_required");
-      const items = this.getGoalContributions();
+      const items = getArray(CONTRIBUTIONS_KEY);
       const record = {
         id: newId(),
         goalId,
@@ -273,25 +309,190 @@
         createdAt: new Date().toISOString()
       };
       items.push(record);
-      localStorage.setItem(CONTRIBUTIONS_KEY, JSON.stringify(items));
+      saveArray(CONTRIBUTIONS_KEY, items);
       return record;
     },
 
     removeGoalContribution(id) {
-      const items = this.getGoalContributions().filter(item => item.id !== id);
-      localStorage.setItem(CONTRIBUTIONS_KEY, JSON.stringify(items));
+      saveArray(CONTRIBUTIONS_KEY, getArray(CONTRIBUTIONS_KEY).filter(item => item.id !== id));
     },
 
     getGoalProgress(goalId) {
       const goal = this.getGoal(goalId);
       if (!goal) return { saved: 0, percent: 0, remaining: 0 };
-      const saved = this.getGoalContributions(goalId)
-        .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+      const saved = this.getGoalContributions(goalId).reduce((sum, item) => sum + Number(item.amount || 0), 0);
       const percent = goal.targetAmount > 0 ? Math.min(100, Math.round((saved / goal.targetAmount) * 100)) : 0;
       return {
         saved: Math.round(saved * 100) / 100,
         percent,
         remaining: Math.max(0, Math.round((goal.targetAmount - saved) * 100) / 100)
+      };
+    },
+
+    getCards(includeInactive = true) {
+      return getArray(CARDS_KEY)
+        .filter(card => includeInactive || card.active !== false)
+        .sort((a, b) => Number(b.active !== false) - Number(a.active !== false) || String(a.name).localeCompare(String(b.name), "pt-BR"));
+    },
+
+    getCard(id) {
+      return this.getCards(true).find(card => card.id === id) || null;
+    },
+
+    upsertCard(input, id = null) {
+      const cards = getArray(CARDS_KEY);
+      const index = id ? cards.findIndex(card => card.id === id) : -1;
+      const current = index >= 0 ? cards[index] : null;
+      const name = String(input?.name || "").trim().slice(0, 80);
+      const limit = normalizeMoney(input?.limit);
+      const closingDay = Math.min(31, Math.max(1, Number(input?.closingDay || 1)));
+      const dueDay = Math.min(31, Math.max(1, Number(input?.dueDay || 1)));
+
+      if (!name) throw new Error("card_name_required");
+      if (!(limit > 0)) throw new Error("card_limit_required");
+
+      const card = {
+        id: current?.id || newId(),
+        name,
+        brand: String(input?.brand || "").trim().slice(0, 30),
+        lastFour: String(input?.lastFour || "").replace(/\D/g, "").slice(-4),
+        limit,
+        closingDay,
+        dueDay,
+        active: input?.active === false ? false : true,
+        createdAt: current?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      if (index >= 0) cards[index] = card;
+      else cards.push(card);
+      saveArray(CARDS_KEY, cards);
+      return card;
+    },
+
+    setCardActive(id, active) {
+      const card = this.getCard(id);
+      if (!card) return null;
+      return this.upsertCard({ ...card, active: Boolean(active) }, id);
+    },
+
+    getCardBill(cardId, billMonth = currentMonth()) {
+      const card = this.getCard(cardId);
+      if (!card) return { total: 0, items: [], dueDate: "", month: billMonth };
+
+      const items = getCollection("expense")
+        .filter(item => item.cardId === cardId && cardBillMonthForExpense(item, card) === billMonth)
+        .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+
+      const total = items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+      return {
+        total: Math.round(total * 100) / 100,
+        items,
+        dueDate: dueDateForBillMonth(billMonth, card.dueDay),
+        month: billMonth
+      };
+    },
+
+    getTotalCardBills(billMonth = currentMonth()) {
+      return this.getCards(false).reduce((sum, card) => sum + this.getCardBill(card.id, billMonth).total, 0);
+    },
+
+    getPayables() {
+      return getArray(PAYABLES_KEY).slice().sort((a, b) =>
+        Number(a.status === "paid") - Number(b.status === "paid") ||
+        String(a.dueDate).localeCompare(String(b.dueDate))
+      );
+    },
+
+    getPayable(id) {
+      return this.getPayables().find(item => item.id === id) || null;
+    },
+
+    upsertPayable(input, id = null) {
+      const items = getArray(PAYABLES_KEY);
+      const index = id ? items.findIndex(item => item.id === id) : -1;
+      const current = index >= 0 ? items[index] : null;
+      const description = String(input?.description || "").trim().slice(0, 180);
+      const amount = normalizeMoney(input?.amount);
+      const category = expenseCategories.includes(String(input?.category || ""))
+        ? String(input.category)
+        : expenseCategories[0];
+      const dueDate = String(input?.dueDate || currentDate()).slice(0, 10);
+
+      if (!description) throw new Error("payable_description_required");
+      if (!(amount > 0)) throw new Error("payable_amount_required");
+
+      const payable = {
+        id: current?.id || newId(),
+        description,
+        amount,
+        category,
+        dueDate,
+        status: input?.status === "paid" ? "paid" : (current?.status === "paid" ? "paid" : "pending"),
+        paidAt: current?.paidAt || "",
+        linkedExpenseId: current?.linkedExpenseId || "",
+        notes: String(input?.notes || "").trim().slice(0, 500),
+        createdAt: current?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      if (index >= 0) items[index] = payable;
+      else items.push(payable);
+      saveArray(PAYABLES_KEY, items);
+      return payable;
+    },
+
+    removePayable(id) {
+      saveArray(PAYABLES_KEY, getArray(PAYABLES_KEY).filter(item => item.id !== id));
+    },
+
+    markPayablePaid(id, createExpense = false) {
+      const items = getArray(PAYABLES_KEY);
+      const index = items.findIndex(item => item.id === id);
+      if (index < 0) return null;
+      const payable = items[index];
+
+      if (createExpense && !payable.linkedExpenseId) {
+        const expense = this.upsertTransaction("expense", {
+          description: payable.description,
+          amount: payable.amount,
+          date: currentDate(),
+          category: payable.category,
+          notes: payable.notes ? `Conta paga: ${payable.notes}` : "Gerado a partir de Contas a Pagar"
+        });
+        payable.linkedExpenseId = expense.id;
+      }
+
+      payable.status = "paid";
+      payable.paidAt = new Date().toISOString();
+      payable.updatedAt = new Date().toISOString();
+      items[index] = payable;
+      saveArray(PAYABLES_KEY, items);
+      return payable;
+    },
+
+    reopenPayable(id) {
+      const items = getArray(PAYABLES_KEY);
+      const index = items.findIndex(item => item.id === id);
+      if (index < 0) return null;
+      items[index] = { ...items[index], status: "pending", paidAt: "", updatedAt: new Date().toISOString() };
+      saveArray(PAYABLES_KEY, items);
+      return items[index];
+    },
+
+    getPayablesSummary() {
+      const items = this.getPayables();
+      const today = currentDate();
+      const pending = items.filter(item => item.status !== "paid");
+      const paid = items.filter(item => item.status === "paid");
+      const overdue = pending.filter(item => item.dueDate < today);
+      return {
+        pendingTotal: Math.round(pending.reduce((sum, item) => sum + Number(item.amount || 0), 0) * 100) / 100,
+        paidTotal: Math.round(paid.reduce((sum, item) => sum + Number(item.amount || 0), 0) * 100) / 100,
+        overdueTotal: Math.round(overdue.reduce((sum, item) => sum + Number(item.amount || 0), 0) * 100) / 100,
+        pendingCount: pending.length,
+        paidCount: paid.length,
+        overdueCount: overdue.length
       };
     },
 
@@ -304,11 +505,20 @@
     },
 
     seedExampleData() {
-      if (getCollection("expense").length || getCollection("income").length) return false;
+      if (getCollection("expense").length || getCollection("income").length || getArray(CARDS_KEY).length) return false;
       const today = new Date();
       const y = today.getFullYear();
       const m = String(today.getMonth() + 1).padStart(2, "0");
       const day = (n) => `${y}-${m}-${String(Math.min(n, 28)).padStart(2, "0")}`;
+
+      const card = this.upsertCard({
+        name: "Cartão principal",
+        brand: "Visa",
+        lastFour: "4821",
+        limit: 5000,
+        closingDay: 3,
+        dueDay: 10
+      });
 
       saveCollection("income", [
         normalizeTransaction("income", { description: "Salário", amount: 6500, date: day(5), category: "Salário" }),
@@ -316,11 +526,20 @@
       ]);
 
       saveCollection("expense", [
-        normalizeTransaction("expense", { description: "Aluguel", amount: 1850, date: day(7), category: "Moradia" }),
-        normalizeTransaction("expense", { description: "Supermercado", amount: 620.35, date: day(10), category: "Alimentação" }),
-        normalizeTransaction("expense", { description: "Combustível", amount: 280, date: day(12), category: "Transporte" }),
-        normalizeTransaction("expense", { description: "Streaming", amount: 55.9, date: day(16), category: "Assinaturas" })
+        normalizeTransaction("expense", { description: "Aluguel", amount: 1850, date: day(7), category: "Moradia", paymentMethod: "pix" }),
+        normalizeTransaction("expense", { description: "Supermercado", amount: 620.35, date: day(10), category: "Alimentação", cardId: card.id }),
+        normalizeTransaction("expense", { description: "Combustível", amount: 280, date: day(12), category: "Transporte", cardId: card.id }),
+        normalizeTransaction("expense", { description: "Streaming", amount: 55.9, date: day(16), category: "Assinaturas", cardId: card.id })
       ]);
+
+      this.upsertPayable({
+        description: "Internet",
+        amount: 119.9,
+        dueDate: day(20),
+        category: "Moradia",
+        notes: "Plano residencial"
+      });
+
       return true;
     },
 
@@ -335,16 +554,20 @@
       return new Intl.DateTimeFormat("pt-BR").format(date);
     },
 
+    formatMonth(value) {
+      if (!value) return "";
+      const [year, month] = String(value).split("-").map(Number);
+      const date = new Date(year, (month || 1) - 1, 1);
+      return new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(date);
+    },
+
     monthKey,
 
     reset() {
-      localStorage.removeItem(PROFILE_KEY);
-      localStorage.removeItem(WORKSPACE_KEY);
-      localStorage.removeItem(EXPENSES_KEY);
-      localStorage.removeItem(INCOMES_KEY);
-      localStorage.removeItem(BUDGETS_KEY);
-      localStorage.removeItem(GOALS_KEY);
-      localStorage.removeItem(CONTRIBUTIONS_KEY);
+      [
+        PROFILE_KEY, WORKSPACE_KEY, EXPENSES_KEY, INCOMES_KEY, BUDGETS_KEY,
+        GOALS_KEY, CONTRIBUTIONS_KEY, CARDS_KEY, PAYABLES_KEY
+      ].forEach(key => localStorage.removeItem(key));
     }
   };
 })();
