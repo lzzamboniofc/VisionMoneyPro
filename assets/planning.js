@@ -15,7 +15,7 @@
     let budgetSum = 0;
     let spentSum = 0;
 
-    budgetList.innerHTML = api.expenseCategories.map(category => {
+    budgetList.innerHTML = api.getCategories("expense").map(category => {
       const planned = Number(byCategory[category] || 0);
       const spent = Number(spend[category] || 0);
       const percent = planned > 0 ? Math.min(100, Math.round((spent / planned) * 100)) : 0;
