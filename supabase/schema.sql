@@ -509,7 +509,7 @@ returns trigger
 language plpgsql
 security invoker
 set search_path = ''
-as $
+as $$
 begin
   if old.role = 'owner'
      and (
@@ -533,7 +533,7 @@ begin
 
   return new;
 end;
-$;
+$$;
 
 revoke all on function private.prevent_last_workspace_owner() from public;
 
