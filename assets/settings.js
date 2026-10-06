@@ -118,7 +118,8 @@
       "vmp_demo_expenses","vmp_demo_incomes","vmp_demo_budgets",
       "vmp_demo_goals","vmp_demo_goal_contributions","vmp_demo_cards","vmp_demo_payables",
       "vmp_demo_custom_categories","vmp_demo_recurrences","vmp_demo_planning_income",
-      "vmp_demo_accounts","vmp_demo_transfers","vmp_demo_card_bill_payments"
+      "vmp_demo_accounts","vmp_demo_transfers","vmp_demo_card_bill_payments",
+      "vmp_demo_import_history"
     ];
     if (!window.confirm("Apagar todos os lançamentos, cartões, contas, orçamentos e metas desta demonstração?")) return;
     keys.forEach(key => localStorage.removeItem(key));
