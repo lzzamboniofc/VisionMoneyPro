@@ -12,6 +12,9 @@
   const RECURRENCES_KEY = "vmp_demo_recurrences";
   const MEMBERS_KEY = "vmp_demo_members";
   const PLANNING_INCOME_KEY = "vmp_demo_planning_income";
+  const ACCOUNTS_KEY = "vmp_demo_accounts";
+  const TRANSFERS_KEY = "vmp_demo_transfers";
+  const CARD_BILL_PAYMENTS_KEY = "vmp_demo_card_bill_payments";
 
   const safeParse = (value, fallback = null) => {
     try { return value ? JSON.parse(value) : fallback; } catch { return fallback; }
@@ -74,6 +77,12 @@
       ? String(input.category)
       : categoryList[0];
 
+    const accounts = getArray(ACCOUNTS_KEY).filter(account => account.active !== false);
+    const requestedAccountId = String(input?.accountId || "").trim();
+    const validAccountId = accounts.some(account => account.id === requestedAccountId)
+      ? requestedAccountId
+      : (accounts[0]?.id || "");
+
     const base = {
       id: existingId || newId(),
       description: String(input?.description || "").trim().slice(0, 180),
@@ -81,6 +90,11 @@
       date,
       category,
       notes: String(input?.notes || "").trim().slice(0, 500),
+      accountId: validAccountId,
+      installmentGroupId: String(input?.installmentGroupId || "").trim(),
+      installmentNumber: Number(input?.installmentNumber || 0) || null,
+      installments: Number(input?.installments || 0) || null,
+      originalAmount: normalizeMoney(input?.originalAmount || 0) || null,
       createdAt: input?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -90,6 +104,7 @@
       const validCard = cardId && getArray(CARDS_KEY).some(card => card.id === cardId);
       base.paymentMethod = validCard ? "credit" : String(input?.paymentMethod || "debit").slice(0, 30);
       base.cardId = validCard ? cardId : "";
+      if (validCard) base.accountId = "";
     }
 
     return base;
@@ -448,6 +463,240 @@
       };
     },
 
+
+    getAccounts(includeInactive = true) {
+      return getArray(ACCOUNTS_KEY)
+        .filter(account => includeInactive || account.active !== false)
+        .sort((a, b) =>
+          Number(b.active !== false) - Number(a.active !== false) ||
+          Number(b.isDefault === true) - Number(a.isDefault === true) ||
+          String(a.name).localeCompare(String(b.name), "pt-BR")
+        );
+    },
+
+    getAccount(id) {
+      return this.getAccounts(true).find(account => account.id === id) || null;
+    },
+
+    getDefaultAccount() {
+      const active = this.getAccounts(false);
+      return active.find(account => account.isDefault) || active[0] || null;
+    },
+
+    upsertAccount(input, id = null) {
+      const accounts = getArray(ACCOUNTS_KEY);
+      const index = id ? accounts.findIndex(account => account.id === id) : -1;
+      const current = index >= 0 ? accounts[index] : null;
+      const name = String(input?.name || "").trim().slice(0, 80);
+      const type = ["checking","savings","cash","digital","investment"].includes(input?.type)
+        ? input.type
+        : "checking";
+      const initialBalance = normalizeMoney(input?.initialBalance);
+      if (!name) throw new Error("account_name_required");
+
+      const record = {
+        id: current?.id || newId(),
+        name,
+        type,
+        institution: String(input?.institution || "").trim().slice(0, 80),
+        initialBalance,
+        active: input?.active === false ? false : true,
+        isDefault: Boolean(input?.isDefault ?? current?.isDefault ?? false),
+        createdAt: current?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      if (record.isDefault) {
+        accounts.forEach(account => { account.isDefault = false; });
+      }
+
+      if (index >= 0) accounts[index] = record;
+      else accounts.push(record);
+
+      if (!accounts.some(account => account.active !== false && account.isDefault)) {
+        const firstActive = accounts.find(account => account.active !== false);
+        if (firstActive) firstActive.isDefault = true;
+      }
+
+      saveArray(ACCOUNTS_KEY, accounts);
+      return record;
+    },
+
+    setAccountActive(id, active) {
+      const account = this.getAccount(id);
+      if (!account) return null;
+      const updated = this.upsertAccount({ ...account, active: Boolean(active) }, id);
+      if (updated.active === false && updated.isDefault) {
+        const remaining = this.getAccounts(false).find(item => item.id !== id);
+        if (remaining) this.upsertAccount({ ...remaining, isDefault: true }, remaining.id);
+      }
+      return updated;
+    },
+
+    setDefaultAccount(id) {
+      const account = this.getAccount(id);
+      if (!account || account.active === false) throw new Error("account_not_available");
+      return this.upsertAccount({ ...account, isDefault: true }, id);
+    },
+
+    getTransfers() {
+      return getArray(TRANSFERS_KEY)
+        .slice()
+        .sort((a, b) => String(b.date).localeCompare(String(a.date)) || String(b.createdAt).localeCompare(String(a.createdAt)));
+    },
+
+    addTransfer(input) {
+      const fromAccountId = String(input?.fromAccountId || "");
+      const toAccountId = String(input?.toAccountId || "");
+      const amount = normalizeMoney(input?.amount);
+      const date = String(input?.date || currentDate()).slice(0, 10);
+      if (!this.getAccount(fromAccountId) || !this.getAccount(toAccountId)) throw new Error("transfer_account_required");
+      if (fromAccountId === toAccountId) throw new Error("transfer_same_account");
+      if (!(amount > 0)) throw new Error("transfer_amount_required");
+
+      const available = this.getAccountBalance(fromAccountId);
+      if (available + 0.001 < amount) {
+        const error = new Error("insufficient_account_balance");
+        error.available = available;
+        throw error;
+      }
+
+      const items = getArray(TRANSFERS_KEY);
+      const record = {
+        id: newId(),
+        fromAccountId,
+        toAccountId,
+        amount,
+        date,
+        notes: String(input?.notes || "").trim().slice(0, 300),
+        createdAt: new Date().toISOString()
+      };
+      items.push(record);
+      saveArray(TRANSFERS_KEY, items);
+      return record;
+    },
+
+    removeTransfer(id) {
+      saveArray(TRANSFERS_KEY, getArray(TRANSFERS_KEY).filter(item => item.id !== id));
+    },
+
+    getAccountBalance(accountId) {
+      const account = this.getAccount(accountId);
+      if (!account) return 0;
+
+      const income = getCollection("income")
+        .filter(item => item.accountId === accountId)
+        .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+
+      const expenses = getCollection("expense")
+        .filter(item => item.accountId === accountId && !item.cardId)
+        .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+
+      const transfersIn = getArray(TRANSFERS_KEY)
+        .filter(item => item.toAccountId === accountId)
+        .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+
+      const transfersOut = getArray(TRANSFERS_KEY)
+        .filter(item => item.fromAccountId === accountId)
+        .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+
+      const billPayments = getArray(CARD_BILL_PAYMENTS_KEY)
+        .filter(item => item.accountId === accountId)
+        .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+
+      return Math.round((
+        Number(account.initialBalance || 0) +
+        income - expenses +
+        transfersIn - transfersOut -
+        billPayments
+      ) * 100) / 100;
+    },
+
+    getTotalAccountsBalance() {
+      return Math.round(this.getAccounts(false)
+        .reduce((sum, account) => sum + this.getAccountBalance(account.id), 0) * 100) / 100;
+    },
+
+    createInstallmentPurchase(input) {
+      const card = this.getCard(String(input?.cardId || ""));
+      const installments = Math.max(2, Math.min(48, Number(input?.installments || 1)));
+      const total = normalizeMoney(input?.amount);
+      if (!card) throw new Error("card_required");
+      if (!(total > 0)) throw new Error("amount_required");
+
+      const groupId = newId();
+      const totalCents = Math.round(total * 100);
+      const baseCents = Math.floor(totalCents / installments);
+      let remainder = totalCents - (baseCents * installments);
+      const [year, month, day] = String(input?.date || currentDate()).split("-").map(Number);
+      const created = [];
+
+      for (let index = 0; index < installments; index += 1) {
+        const target = new Date(year, month - 1 + index, 1, 12);
+        const last = lastDayOfMonth(target.getFullYear(), target.getMonth());
+        target.setDate(Math.min(day, last));
+        const cents = baseCents + (remainder > 0 ? 1 : 0);
+        if (remainder > 0) remainder -= 1;
+
+        created.push(this.upsertTransaction("expense", {
+          description: String(input?.description || "").trim(),
+          amount: cents / 100,
+          date: target.toISOString().slice(0, 10),
+          category: input?.category,
+          notes: input?.notes,
+          cardId: card.id,
+          installmentGroupId: groupId,
+          installmentNumber: index + 1,
+          installments,
+          originalAmount: total
+        }));
+      }
+
+      return created;
+    },
+
+    getBillPayment(cardId, billMonth) {
+      return getArray(CARD_BILL_PAYMENTS_KEY)
+        .find(item => item.cardId === cardId && item.billMonth === billMonth) || null;
+    },
+
+    payCardBill(cardId, billMonth, accountId) {
+      const bill = this.getCardBill(cardId, billMonth);
+      if (!bill.total) throw new Error("empty_bill");
+      if (bill.payment) throw new Error("bill_already_paid");
+
+      const account = this.getAccount(accountId);
+      if (!account || account.active === false) throw new Error("account_not_available");
+      const balance = this.getAccountBalance(accountId);
+      if (balance + 0.001 < bill.total) {
+        const error = new Error("insufficient_account_balance");
+        error.available = balance;
+        throw error;
+      }
+
+      const payments = getArray(CARD_BILL_PAYMENTS_KEY);
+      const payment = {
+        id: newId(),
+        cardId,
+        billMonth,
+        accountId,
+        amount: bill.total,
+        dueDate: bill.dueDate,
+        paidAt: new Date().toISOString()
+      };
+      payments.push(payment);
+      saveArray(CARD_BILL_PAYMENTS_KEY, payments);
+      return payment;
+    },
+
+    reopenCardBill(cardId, billMonth) {
+      saveArray(
+        CARD_BILL_PAYMENTS_KEY,
+        getArray(CARD_BILL_PAYMENTS_KEY)
+          .filter(item => !(item.cardId === cardId && item.billMonth === billMonth))
+      );
+    },
+
     getCards(includeInactive = true) {
       return getArray(CARDS_KEY)
         .filter(card => includeInactive || card.active !== false)
@@ -504,11 +753,14 @@
         .sort((a, b) => String(b.date).localeCompare(String(a.date)));
 
       const total = items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+      const payment = this.getBillPayment(cardId, billMonth);
       return {
         total: Math.round(total * 100) / 100,
         items,
         dueDate: dueDateForBillMonth(billMonth, card.dueDay),
-        month: billMonth
+        month: billMonth,
+        payment,
+        status: payment ? "paid" : (billMonth < currentMonth() && total > 0 ? "overdue" : "open")
       };
     },
 
@@ -799,6 +1051,14 @@
       const m = String(today.getMonth() + 1).padStart(2, "0");
       const day = (n) => `${y}-${m}-${String(Math.min(n, 28)).padStart(2, "0")}`;
 
+      const account = this.upsertAccount({
+        name: "Conta principal",
+        type: "checking",
+        institution: "Banco demo",
+        initialBalance: 2500,
+        isDefault: true
+      });
+
       const card = this.upsertCard({
         name: "Cartão principal",
         brand: "Visa",
@@ -809,12 +1069,12 @@
       });
 
       saveCollection("income", [
-        normalizeTransaction("income", { description: "Salário", amount: 6500, date: day(5), category: "Salário" }),
-        normalizeTransaction("income", { description: "Projeto freelance", amount: 1200, date: day(14), category: "Freelance" })
+        normalizeTransaction("income", { description: "Salário", amount: 6500, date: day(5), category: "Salário", accountId: account.id }),
+        normalizeTransaction("income", { description: "Projeto freelance", amount: 1200, date: day(14), category: "Freelance", accountId: account.id })
       ]);
 
       saveCollection("expense", [
-        normalizeTransaction("expense", { description: "Aluguel", amount: 1850, date: day(7), category: "Moradia", paymentMethod: "pix" }),
+        normalizeTransaction("expense", { description: "Aluguel", amount: 1850, date: day(7), category: "Moradia", paymentMethod: "pix", accountId: account.id }),
         normalizeTransaction("expense", { description: "Supermercado", amount: 620.35, date: day(10), category: "Alimentação", cardId: card.id }),
         normalizeTransaction("expense", { description: "Combustível", amount: 280, date: day(12), category: "Transporte", cardId: card.id }),
         normalizeTransaction("expense", { description: "Streaming", amount: 55.9, date: day(16), category: "Assinaturas", cardId: card.id })
@@ -855,7 +1115,8 @@
       [
         PROFILE_KEY, WORKSPACE_KEY, EXPENSES_KEY, INCOMES_KEY, BUDGETS_KEY,
         GOALS_KEY, CONTRIBUTIONS_KEY, CARDS_KEY, PAYABLES_KEY,
-        CUSTOM_CATEGORIES_KEY, RECURRENCES_KEY, MEMBERS_KEY, PLANNING_INCOME_KEY
+        CUSTOM_CATEGORIES_KEY, RECURRENCES_KEY, MEMBERS_KEY, PLANNING_INCOME_KEY,
+        ACCOUNTS_KEY, TRANSFERS_KEY, CARD_BILL_PAYMENTS_KEY
       ].forEach(key => localStorage.removeItem(key));
     }
   };
