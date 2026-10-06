@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Planejamento · VisionMoneyPro</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <div class="dash-shell">
+    <aside class="sidebar">
+      <a class="brand" href="../"><span class="brand-mark">V</span><strong>VisionMoneyPro</strong></a>
+      <nav>
+        <a href="../dashboard/">Visão geral</a>
+        <a href="../gastos/">Gastos</a>
+        <a href="../receitas/">Receitas</a>
+        <a class="active" href="./">Planejamento</a>
+        <a href="../metas/">Metas</a>
+        <a href="../onboarding/">Configurar espaço</a>
+      </nav>
+    </aside>
+
+    <main class="dash-main">
+      <header class="dash-head">
+        <div>
+          <p class="eyebrow">PLANEJAMENTO</p>
+          <h1>Orçamento mensal</h1>
+          <p class="muted dashboard-subtitle">Defina limites por categoria e compare com seus gastos reais.</p>
+        </div>
+        <input class="month-picker" id="planning-month" type="month">
+      </header>
+
+      <section class="metric-grid planning-metrics">
+        <article class="metric accent"><span>Planejado</span><strong id="total-budget">R$ 0,00</strong><small>Soma dos limites definidos</small></article>
+        <article class="metric"><span>Gasto no mês</span><strong id="total-spent">R$ 0,00</strong><small>Com base nos lançamentos</small></article>
+        <article class="metric"><span>Disponível</span><strong id="total-remaining">R$ 0,00</strong><small>Planejado menos gasto</small></article>
+      </section>
+
+      <section class="panel planning-panel">
+        <div class="section-head">
+          <div><p class="eyebrow">CATEGORIAS</p><h2>Limites do mês</h2></div>
+          <a class="btn ghost" href="../gastos/">Ver gastos</a>
+        </div>
+        <div class="budget-list" id="budget-list"></div>
+      </section>
+    </main>
+  </div>
+
+  <nav class="mobile-nav">
+    <a href="../dashboard/">Início</a>
+    <a href="../gastos/">Gastos</a>
+    <a class="active" href="./">Planejar</a>
+    <a href="../metas/">Metas</a>
+  </nav>
+
+  <script src="../assets/demo.js"></script>
+  <script src="../assets/planning.js"></script>
+</body>
+</html>
