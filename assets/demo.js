@@ -3,6 +3,9 @@
   const WORKSPACE_KEY = "vmp_demo_workspace";
   const EXPENSES_KEY = "vmp_demo_expenses";
   const INCOMES_KEY = "vmp_demo_incomes";
+  const BUDGETS_KEY = "vmp_demo_budgets";
+  const GOALS_KEY = "vmp_demo_goals";
+  const CONTRIBUTIONS_KEY = "vmp_demo_goal_contributions";
 
   const safeParse = (value, fallback = null) => {
     try { return value ? JSON.parse(value) : fallback; } catch { return fallback; }
@@ -149,6 +152,149 @@
       };
     },
 
+    getBudgets(month = currentDate().slice(0, 7)) {
+      const items = safeParse(localStorage.getItem(BUDGETS_KEY), []);
+      return (Array.isArray(items) ? items : [])
+        .filter(item => item.month === month)
+        .sort((a, b) => String(a.category).localeCompare(String(b.category), "pt-BR"));
+    },
+
+    upsertBudget(category, amount, month = currentDate().slice(0, 7)) {
+      const value = normalizeMoney(amount);
+      if (!(value > 0)) throw new Error("budget_amount_required");
+      if (!expenseCategories.includes(category)) throw new Error("invalid_category");
+
+      const items = safeParse(localStorage.getItem(BUDGETS_KEY), []);
+      const budgets = Array.isArray(items) ? items : [];
+      const index = budgets.findIndex(item => item.month === month && item.category === category);
+      const record = {
+        id: index >= 0 ? budgets[index].id : newId(),
+        month,
+        category,
+        amount: value,
+        updatedAt: new Date().toISOString()
+      };
+
+      if (index >= 0) budgets[index] = record;
+      else budgets.push(record);
+      localStorage.setItem(BUDGETS_KEY, JSON.stringify(budgets));
+      return record;
+    },
+
+    removeBudget(category, month = currentDate().slice(0, 7)) {
+      const items = safeParse(localStorage.getItem(BUDGETS_KEY), []);
+      const budgets = Array.isArray(items) ? items : [];
+      localStorage.setItem(BUDGETS_KEY, JSON.stringify(
+        budgets.filter(item => !(item.month === month && item.category === category))
+      ));
+    },
+
+    getCategorySpend(month = currentDate().slice(0, 7)) {
+      const totals = Object.fromEntries(expenseCategories.map(category => [category, 0]));
+      getCollection("expense")
+        .filter(item => String(item.date).slice(0, 7) === month)
+        .forEach(item => {
+          totals[item.category] = Math.round(((totals[item.category] || 0) + Number(item.amount || 0)) * 100) / 100;
+        });
+      return totals;
+    },
+
+    getGoals() {
+      const items = safeParse(localStorage.getItem(GOALS_KEY), []);
+      return (Array.isArray(items) ? items : []).slice().sort((a, b) =>
+        Number(a.completed) - Number(b.completed) ||
+        String(a.targetDate || "9999-12-31").localeCompare(String(b.targetDate || "9999-12-31"))
+      );
+    },
+
+    getGoal(id) {
+      return this.getGoals().find(goal => goal.id === id) || null;
+    },
+
+    upsertGoal(input, id = null) {
+      const items = safeParse(localStorage.getItem(GOALS_KEY), []);
+      const goals = Array.isArray(items) ? items : [];
+      const index = id ? goals.findIndex(goal => goal.id === id) : -1;
+      const current = index >= 0 ? goals[index] : null;
+      const name = String(input?.name || "").trim().slice(0, 100);
+      const targetAmount = normalizeMoney(input?.targetAmount);
+      if (!name) throw new Error("goal_name_required");
+      if (!(targetAmount > 0)) throw new Error("goal_amount_required");
+
+      const goal = {
+        id: current?.id || newId(),
+        name,
+        targetAmount,
+        targetDate: String(input?.targetDate || "").slice(0, 10),
+        completed: Boolean(input?.completed ?? current?.completed ?? false),
+        createdAt: current?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      if (index >= 0) goals[index] = goal;
+      else goals.push(goal);
+      localStorage.setItem(GOALS_KEY, JSON.stringify(goals));
+      return goal;
+    },
+
+    removeGoal(id) {
+      const goals = this.getGoals().filter(goal => goal.id !== id);
+      localStorage.setItem(GOALS_KEY, JSON.stringify(goals));
+      const contributions = safeParse(localStorage.getItem(CONTRIBUTIONS_KEY), []);
+      localStorage.setItem(CONTRIBUTIONS_KEY, JSON.stringify(
+        (Array.isArray(contributions) ? contributions : []).filter(item => item.goalId !== id)
+      ));
+    },
+
+    setGoalCompleted(id, completed) {
+      const goal = this.getGoal(id);
+      if (!goal) return null;
+      return this.upsertGoal({ ...goal, completed: Boolean(completed) }, id);
+    },
+
+    getGoalContributions(goalId = null) {
+      const items = safeParse(localStorage.getItem(CONTRIBUTIONS_KEY), []);
+      return (Array.isArray(items) ? items : [])
+        .filter(item => !goalId || item.goalId === goalId)
+        .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    },
+
+    addGoalContribution(goalId, amount, date = currentDate(), notes = "") {
+      if (!this.getGoal(goalId)) throw new Error("goal_not_found");
+      const value = normalizeMoney(amount);
+      if (!(value > 0)) throw new Error("contribution_amount_required");
+      const items = this.getGoalContributions();
+      const record = {
+        id: newId(),
+        goalId,
+        amount: value,
+        date: String(date || currentDate()).slice(0, 10),
+        notes: String(notes || "").trim().slice(0, 300),
+        createdAt: new Date().toISOString()
+      };
+      items.push(record);
+      localStorage.setItem(CONTRIBUTIONS_KEY, JSON.stringify(items));
+      return record;
+    },
+
+    removeGoalContribution(id) {
+      const items = this.getGoalContributions().filter(item => item.id !== id);
+      localStorage.setItem(CONTRIBUTIONS_KEY, JSON.stringify(items));
+    },
+
+    getGoalProgress(goalId) {
+      const goal = this.getGoal(goalId);
+      if (!goal) return { saved: 0, percent: 0, remaining: 0 };
+      const saved = this.getGoalContributions(goalId)
+        .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+      const percent = goal.targetAmount > 0 ? Math.min(100, Math.round((saved / goal.targetAmount) * 100)) : 0;
+      return {
+        saved: Math.round(saved * 100) / 100,
+        percent,
+        remaining: Math.max(0, Math.round((goal.targetAmount - saved) * 100) / 100)
+      };
+    },
+
     getRecentTransactions(limit = 6) {
       const expenses = getCollection("expense").map(item => ({ ...item, kind: "expense" }));
       const incomes = getCollection("income").map(item => ({ ...item, kind: "income" }));
@@ -196,6 +342,9 @@
       localStorage.removeItem(WORKSPACE_KEY);
       localStorage.removeItem(EXPENSES_KEY);
       localStorage.removeItem(INCOMES_KEY);
+      localStorage.removeItem(BUDGETS_KEY);
+      localStorage.removeItem(GOALS_KEY);
+      localStorage.removeItem(CONTRIBUTIONS_KEY);
     }
   };
 })();
