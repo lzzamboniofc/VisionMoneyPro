@@ -18,7 +18,7 @@
   }
 
   function populateCategories() {
-    document.getElementById("payable-category").innerHTML = api.expenseCategories
+    document.getElementById("payable-category").innerHTML = api.getCategories("expense")
       .map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`)
       .join("");
   }
