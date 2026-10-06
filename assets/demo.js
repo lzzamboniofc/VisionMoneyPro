@@ -232,6 +232,7 @@
       const index = id ? items.findIndex(item => item.id === id) : -1;
       const current = index >= 0 ? items[index] : null;
       const normalized = normalizeTransaction(kind, {
+        ...(current || {}),
         ...input,
         createdAt: current?.createdAt
       }, current?.id || null);
