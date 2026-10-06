@@ -242,7 +242,7 @@ create table if not exists public.payables (
   foreign key (workspace_id, category_id)
     references public.categories(workspace_id, id) on delete restrict,
   foreign key (workspace_id, linked_expense_id)
-    references public.expenses(workspace_id, id) on delete set null
+    references public.expenses(workspace_id, id) on delete restrict
 );
 
 create table if not exists public.monthly_plans (
@@ -375,6 +375,10 @@ create index if not exists categories_workspace_active_idx
 
 create index if not exists financial_accounts_workspace_active_idx
   on public.financial_accounts (workspace_id, is_active, is_default);
+
+create unique index if not exists financial_accounts_one_default_idx
+  on public.financial_accounts (workspace_id)
+  where is_default;
 
 create index if not exists credit_cards_workspace_active_idx
   on public.credit_cards (workspace_id, is_active);
