@@ -48,11 +48,10 @@
         </div>
 
         <div class="allocation-overview">
-          <div class="allocation-overview-head">
-            <div><span>Comprometimento da renda</span><strong id="allocation-percent">0%</strong></div>
-            <div><span id="allocation-summary">R$ 0,00 de R$ 0,00 distribuídos</span></div>
+          <div class="allocation-track" role="progressbar" aria-label="Percentual da renda distribuída" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <span id="allocation-track-fill" class="allocation-track-fill"></span>
+            <strong id="allocation-percent" class="allocation-track-label">0%</strong>
           </div>
-          <div class="allocation-track"><span id="allocation-track-fill"></span></div>
           <div class="allocation-foot">
             <span id="allocation-available">R$ 0,00 disponível para novos limites</span>
             <span id="recorded-income-hint">Receitas registradas no mês: R$ 0,00</span>
