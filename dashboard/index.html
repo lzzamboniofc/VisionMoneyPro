@@ -1,1 +1,115 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboard · VisionMoneyPro</title><link rel="stylesheet" href="../assets/styles.css"></head><body><div class="dash-shell"><aside class="sidebar"><a class="brand" href="../"><span class="brand-mark">V</span><strong>VisionMoneyPro</strong></a><nav><a class="active" href="./">Visão geral</a><span>Gastos</span><span>Planejamento</span><span>Metas</span><span>Configurações</span></nav></aside><main class="dash-main"><header class="dash-head"><div><p class="eyebrow">DASHBOARD</p><h1>Visão financeira.</h1></div><span class="pill">Demonstração</span></header><section class="metric-grid"><article class="metric accent"><span>Saldo do mês</span><strong>R$ 8.420,00</strong><small>+12% em relação ao mês anterior</small></article><article class="metric"><span>Receitas</span><strong>R$ 12.500,00</strong><small>3 entradas registradas</small></article><article class="metric"><span>Despesas</span><strong>R$ 4.080,00</strong><small>28 lançamentos</small></article><article class="metric"><span>Metas</span><strong>3</strong><small>2 dentro do planejado</small></article></section><section class="dash-grid"><article class="panel"><p class="eyebrow">FLUXO FINANCEIRO</p><h2>Seu mês em perspectiva</h2><p class="muted">Esta é uma prévia visual do dashboard que vamos transformar no produto completo.</p><div class="mini-bars"><i></i><i></i><i></i><i></i><i></i><i></i></div></article><article class="panel"><p class="eyebrow">VISÃO RÁPIDA</p><h2>Próximos recursos</h2><div class="list"><div>Gastos e receitas por categoria</div><div>Cartões e faturas</div><div>Contas a pagar</div><div>Metas e planejamento</div><div>Conta individual ou compartilhada</div></div></article></section></main></div></body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Dashboard · VisionMoneyPro</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <div class="dash-shell">
+    <aside class="sidebar">
+      <a class="brand" href="../"><span class="brand-mark">V</span><strong>VisionMoneyPro</strong></a>
+      <nav>
+        <a class="active" href="./">Visão geral</a>
+        <span>Gastos</span>
+        <span>Planejamento</span>
+        <span>Metas</span>
+        <a href="../onboarding/">Configurar espaço</a>
+      </nav>
+    </aside>
+
+    <main class="dash-main">
+      <header class="dash-head">
+        <div>
+          <p class="eyebrow" id="workspace-label">DASHBOARD</p>
+          <h1 id="greeting">Visão financeira.</h1>
+          <p class="muted dashboard-subtitle" id="workspace-subtitle">Sua visão mensal em um só lugar.</p>
+        </div>
+        <span class="pill" id="workspace-mode">Demonstração</span>
+      </header>
+
+      <section class="metric-grid">
+        <article class="metric accent">
+          <span>Saldo do mês</span><strong>R$ 8.420,00</strong><small>+12% em relação ao mês anterior</small>
+        </article>
+        <article class="metric">
+          <span>Receitas</span><strong>R$ 12.500,00</strong><small>3 entradas registradas</small>
+        </article>
+        <article class="metric">
+          <span>Despesas</span><strong>R$ 4.080,00</strong><small>28 lançamentos</small>
+        </article>
+        <article class="metric">
+          <span>Metas</span><strong>3</strong><small>2 dentro do planejado</small>
+        </article>
+      </section>
+
+      <section class="dash-grid">
+        <article class="panel">
+          <p class="eyebrow">FLUXO FINANCEIRO</p>
+          <h2>Seu mês em perspectiva</h2>
+          <p class="muted">Esta prévia será conectada aos dados reais quando o backend for ativado.</p>
+          <div class="mini-bars"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        </article>
+
+        <article class="panel">
+          <p class="eyebrow">VISÃO RÁPIDA</p>
+          <h2>Próximos recursos</h2>
+          <div class="list">
+            <div>Gastos e receitas por categoria</div>
+            <div>Cartões e faturas</div>
+            <div>Contas a pagar</div>
+            <div>Metas e planejamento</div>
+            <div id="sharing-item">Conta individual ou compartilhada</div>
+          </div>
+        </article>
+      </section>
+
+      <section class="panel dashboard-info-panel">
+        <div>
+          <p class="eyebrow">AMBIENTE DE DEMONSTRAÇÃO</p>
+          <h2 id="workspace-name">Minhas finanças</h2>
+          <p class="muted" id="sharing-copy">Você está vendo um exemplo local. Nenhum dado financeiro desta tela foi gravado em banco.</p>
+        </div>
+        <div class="actions compact-actions">
+          <a class="btn ghost" href="../onboarding/">Alterar configuração</a>
+          <button class="btn ghost" id="reset-demo" type="button">Limpar demonstração</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="../assets/demo.js"></script>
+  <script>
+    const profile = VisionMoneyProDemo.getProfile();
+    const workspace = VisionMoneyProDemo.getWorkspace();
+
+    if (profile?.name) {
+      document.getElementById("greeting").textContent = "Olá, " + profile.name + ".";
+    }
+
+    if (workspace) {
+      document.getElementById("workspace-label").textContent = workspace.name.toUpperCase();
+      document.getElementById("workspace-name").textContent = workspace.name;
+      const shared = workspace.mode === "shared";
+      document.getElementById("workspace-mode").textContent = shared ? "Compartilhado" : "Individual";
+      document.getElementById("workspace-subtitle").textContent = shared
+        ? "Um espaço financeiro pensado para decisões em conjunto."
+        : "Seu espaço pessoal para organizar, planejar e acompanhar.";
+      document.getElementById("sharing-copy").textContent = shared
+        ? (workspace.partnerName
+            ? "Modo compartilhado configurado com " + workspace.partnerName + ". O convite real será ativado com o backend."
+            : "Modo compartilhado configurado. O convite real será ativado com o backend.")
+        : "Modo individual configurado. Você poderá convidar alguém futuramente sem perder seu histórico.";
+      document.getElementById("sharing-item").textContent = shared
+        ? "Compartilhamento e convites"
+        : "Convite opcional no futuro";
+    }
+
+    document.getElementById("reset-demo").addEventListener("click", () => {
+      VisionMoneyProDemo.reset();
+      window.location.href = "../login/";
+    });
+  </script>
+</body>
+</html>
