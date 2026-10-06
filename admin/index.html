@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin · VisionMoneyPro</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body class="admin-body">
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <a class="brand" href="../"><span class="brand-mark">V</span><strong>VisionMoneyPro</strong></a>
+      <div class="admin-role">ADMIN PREVIEW</div>
+      <nav>
+        <a class="active" href="./">Visão geral</a>
+        <span>Usuários</span>
+        <span>Workspaces</span>
+        <span>Assinaturas</span>
+        <span>Auditoria</span>
+      </nav>
+      <a class="admin-back-link" href="../dashboard/">← Voltar ao app</a>
+    </aside>
+
+    <main class="admin-main">
+      <header class="admin-header">
+        <div>
+          <p class="eyebrow">OPERAÇÃO DO PRODUTO</p>
+          <h1>Painel administrativo</h1>
+          <p class="muted">Estrutura de prévia. Os números e usuários abaixo são simulados e não vêm de nenhum banco real.</p>
+        </div>
+        <span class="pill admin-demo-pill">Dados simulados</span>
+      </header>
+
+      <section class="admin-metric-grid">
+        <article class="metric accent"><span>Usuários cadastrados</span><strong>128</strong><small>+21 no período demonstrativo</small></article>
+        <article class="metric"><span>Workspaces</span><strong>103</strong><small>62 individuais · 41 compartilhados</small></article>
+        <article class="metric income-metric"><span>Ativos em 7 dias</span><strong>67</strong><small>52% da base simulada</small></article>
+        <article class="metric"><span>Planos pagos</span><strong>19</strong><small>Prévia para futura cobrança</small></article>
+      </section>
+
+      <section class="admin-grid">
+        <article class="panel">
+          <div class="section-head">
+            <div><p class="eyebrow">CRESCIMENTO</p><h2>Novos cadastros</h2></div>
+            <span class="pill">12 períodos</span>
+          </div>
+          <div class="admin-chart" id="admin-signups-chart"></div>
+        </article>
+
+        <article class="panel">
+          <p class="eyebrow">PRODUTO</p>
+          <h2>Distribuição dos workspaces</h2>
+          <div class="donut-wrap">
+            <div class="donut-chart"><span>103<small>total</small></span></div>
+            <div class="donut-legend">
+              <div><i class="dot individual"></i><span>Individual</span><strong>62</strong></div>
+              <div><i class="dot shared"></i><span>Compartilhado</span><strong>41</strong></div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="panel admin-users-panel">
+        <div class="section-head admin-table-head">
+          <div>
+            <p class="eyebrow">CLIENTES</p>
+            <h2>Cadastros recentes</h2>
+            <small class="muted" id="admin-result-count">0 registro(s)</small>
+          </div>
+          <div class="admin-table-filters">
+            <input id="admin-search" type="search" placeholder="Buscar usuário ou workspace">
+            <select id="admin-status-filter">
+              <option value="">Todos os status</option>
+              <option>Ativo</option>
+              <option>Pendente</option>
+              <option>Inativo</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Usuário</th><th>Workspace</th><th>Plano</th><th>Status</th><th>Último acesso</th><th></th></tr></thead>
+            <tbody id="admin-users-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="admin-safety-grid">
+        <article class="panel">
+          <p class="eyebrow">PRIVACIDADE</p>
+          <h2>Admin sem acesso financeiro por padrão</h2>
+          <p class="muted">O painel real será desenhado para operar cadastro, status, plano, atividade e suporte sem abrir gastos, rendas ou metas dos clientes durante a operação normal.</p>
+        </article>
+        <article class="panel">
+          <p class="eyebrow">PRÓXIMA CONEXÃO</p>
+          <h2>O que entra quando o backend estiver ativo</h2>
+          <div class="list">
+            <div>Usuários reais do Supabase Auth</div>
+            <div>Workspaces e quantidade de membros</div>
+            <div>Último acesso e status operacional</div>
+            <div>Plano, assinatura e receita recorrente</div>
+            <div>Logs e trilha de auditoria</div>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script src="../assets/admin.js"></script>
+</body>
+</html>
