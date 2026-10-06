@@ -751,3 +751,7 @@ h1,h2,h3,strong{letter-spacing:-.018em}
 .dashboard-insight.positive .dashboard-insight-icon{color:#a7f3e8;background:rgba(94,234,212,.09)}
 .compact-empty{min-height:110px}
 @media(max-width:820px){.dashboard-insights{grid-template-columns:1fr}}
+
+.payable-account-select{max-width:190px;min-height:31px;padding:5px 7px;border:1px solid var(--border);border-radius:8px;color:#d7dceb;background:rgba(2,6,15,.58);font-size:.67rem}
+.payable-actions button:disabled{opacity:.42;cursor:not-allowed}
+@media(max-width:680px){.payable-account-select{max-width:100%;width:100%}}
