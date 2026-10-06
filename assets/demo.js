@@ -744,6 +744,25 @@
       return this.upsertCard({ ...card, active: Boolean(active) }, id);
     },
 
+    getCardUsedLimit(cardId) {
+      const card = this.getCard(cardId);
+      if (!card) return 0;
+
+      const grouped = {};
+      getCollection("expense")
+        .filter(item => item.cardId === cardId)
+        .forEach(item => {
+          const month = cardBillMonthForExpense(item, card);
+          grouped[month] = (grouped[month] || 0) + Number(item.amount || 0);
+        });
+
+      const used = Object.entries(grouped).reduce((sum, [month, total]) => {
+        return sum + (this.getBillPayment(cardId, month) ? 0 : Number(total || 0));
+      }, 0);
+
+      return Math.round(used * 100) / 100;
+    },
+
     getCardBill(cardId, billMonth = currentMonth()) {
       const card = this.getCard(cardId);
       if (!card) return { total: 0, items: [], dueDate: "", month: billMonth };
@@ -760,7 +779,7 @@
         dueDate: dueDateForBillMonth(billMonth, card.dueDay),
         month: billMonth,
         payment,
-        status: payment ? "paid" : (billMonth < currentMonth() && total > 0 ? "overdue" : "open")
+        status: payment ? "paid" : (dueDateForBillMonth(billMonth, card.dueDay) < currentDate() && total > 0 ? "overdue" : "open")
       };
     },
 
