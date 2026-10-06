@@ -44,10 +44,15 @@ do $$ begin
 exception when duplicate_object then null;
 end $$;
 
-do $$ begin
+do $ begin
   create type public.recurrence_frequency as enum ('weekly', 'monthly', 'yearly');
 exception when duplicate_object then null;
-end $$;
+end $;
+
+do $ begin
+  create type public.financial_account_type as enum ('checking', 'savings', 'cash', 'digital', 'investment');
+exception when duplicate_object then null;
+end $;
 
 -- ---------------------------------------------------------------------------
 -- Core identity / tenancy
@@ -100,6 +105,21 @@ create table if not exists public.categories (
   unique (workspace_id, id)
 );
 
+create table if not exists public.financial_accounts (
+  id uuid primary key default gen_random_uuid(),
+  workspace_id uuid not null references public.workspaces(id) on delete cascade,
+  name text not null check (char_length(trim(name)) between 1 and 80),
+  account_type public.financial_account_type not null default 'checking',
+  institution text,
+  initial_balance numeric(14,2) not null default 0,
+  is_default boolean not null default false,
+  is_active boolean not null default true,
+  created_by uuid not null references auth.users(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (workspace_id, id)
+);
+
 create table if not exists public.credit_cards (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.workspaces(id) on delete cascade,
@@ -124,6 +144,7 @@ create table if not exists public.expenses (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.workspaces(id) on delete cascade,
   category_id uuid,
+  account_id uuid,
   credit_card_id uuid,
   description text not null check (char_length(trim(description)) between 1 and 180),
   amount numeric(14,2) not null check (amount > 0),
@@ -132,13 +153,19 @@ create table if not exists public.expenses (
   payment_method text,
   installments smallint not null default 1 check (installments between 1 and 120),
   installment_number smallint check (installment_number is null or installment_number between 1 and 120),
+  installment_group_id uuid,
+  original_amount numeric(14,2) check (original_amount is null or original_amount > 0),
   notes text,
   created_by uuid not null references auth.users(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
+  unique (workspace_id, id),
   check (installment_number is null or installment_number <= installments),
+  check (not (account_id is not null and credit_card_id is not null)),
   foreign key (workspace_id, category_id)
     references public.categories(workspace_id, id) on delete restrict,
+  foreign key (workspace_id, account_id)
+    references public.financial_accounts(workspace_id, id) on delete restrict,
   foreign key (workspace_id, credit_card_id)
     references public.credit_cards(workspace_id, id) on delete restrict
 );
@@ -147,6 +174,7 @@ create table if not exists public.incomes (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.workspaces(id) on delete cascade,
   category_id uuid,
+  account_id uuid,
   description text not null check (char_length(trim(description)) between 1 and 180),
   amount numeric(14,2) not null check (amount > 0),
   income_date date not null default current_date,
@@ -157,7 +185,44 @@ create table if not exists public.incomes (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   foreign key (workspace_id, category_id)
-    references public.categories(workspace_id, id) on delete restrict
+    references public.categories(workspace_id, id) on delete restrict,
+  foreign key (workspace_id, account_id)
+    references public.financial_accounts(workspace_id, id) on delete restrict
+);
+
+create table if not exists public.transfers (
+  id uuid primary key default gen_random_uuid(),
+  workspace_id uuid not null references public.workspaces(id) on delete cascade,
+  from_account_id uuid not null,
+  to_account_id uuid not null,
+  amount numeric(14,2) not null check (amount > 0),
+  transfer_date date not null default current_date,
+  notes text,
+  created_by uuid not null references auth.users(id),
+  created_at timestamptz not null default now(),
+  check (from_account_id <> to_account_id),
+  foreign key (workspace_id, from_account_id)
+    references public.financial_accounts(workspace_id, id) on delete restrict,
+  foreign key (workspace_id, to_account_id)
+    references public.financial_accounts(workspace_id, id) on delete restrict
+);
+
+create table if not exists public.card_bill_payments (
+  id uuid primary key default gen_random_uuid(),
+  workspace_id uuid not null references public.workspaces(id) on delete cascade,
+  credit_card_id uuid not null,
+  account_id uuid not null,
+  bill_month date not null check (bill_month = date_trunc('month', bill_month)::date),
+  amount numeric(14,2) not null check (amount > 0),
+  due_date date,
+  paid_at timestamptz not null default now(),
+  created_by uuid not null references auth.users(id),
+  created_at timestamptz not null default now(),
+  unique (workspace_id, credit_card_id, bill_month),
+  foreign key (workspace_id, credit_card_id)
+    references public.credit_cards(workspace_id, id) on delete restrict,
+  foreign key (workspace_id, account_id)
+    references public.financial_accounts(workspace_id, id) on delete restrict
 );
 
 create table if not exists public.payables (
@@ -169,12 +234,26 @@ create table if not exists public.payables (
   due_date date not null,
   status public.payable_status not null default 'pending',
   paid_at timestamptz,
+  linked_expense_id uuid,
   notes text,
   created_by uuid not null references auth.users(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   foreign key (workspace_id, category_id)
-    references public.categories(workspace_id, id) on delete restrict
+    references public.categories(workspace_id, id) on delete restrict,
+  foreign key (workspace_id, linked_expense_id)
+    references public.expenses(workspace_id, id) on delete set null
+);
+
+create table if not exists public.monthly_plans (
+  id uuid primary key default gen_random_uuid(),
+  workspace_id uuid not null references public.workspaces(id) on delete cascade,
+  month date not null check (month = date_trunc('month', month)::date),
+  income_base numeric(14,2) not null check (income_base > 0),
+  created_by uuid not null references auth.users(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (workspace_id, month)
 );
 
 create table if not exists public.category_budgets (
@@ -294,6 +373,9 @@ create index if not exists workspace_members_user_idx
 create index if not exists categories_workspace_active_idx
   on public.categories (workspace_id, is_active, sort_order);
 
+create index if not exists financial_accounts_workspace_active_idx
+  on public.financial_accounts (workspace_id, is_active, is_default);
+
 create index if not exists credit_cards_workspace_active_idx
   on public.credit_cards (workspace_id, is_active);
 
@@ -306,8 +388,17 @@ create index if not exists expenses_workspace_category_date_idx
 create index if not exists incomes_workspace_date_idx
   on public.incomes (workspace_id, income_date desc);
 
+create index if not exists transfers_workspace_date_idx
+  on public.transfers (workspace_id, transfer_date desc);
+
+create index if not exists card_bill_payments_workspace_month_idx
+  on public.card_bill_payments (workspace_id, bill_month desc);
+
 create index if not exists payables_workspace_due_status_idx
   on public.payables (workspace_id, due_date, status);
+
+create index if not exists monthly_plans_workspace_month_idx
+  on public.monthly_plans (workspace_id, month);
 
 create index if not exists category_budgets_workspace_month_idx
   on public.category_budgets (workspace_id, month);
@@ -466,6 +557,11 @@ create trigger categories_set_updated_at
 before update on public.categories
 for each row execute function private.set_updated_at();
 
+drop trigger if exists financial_accounts_set_updated_at on public.financial_accounts;
+create trigger financial_accounts_set_updated_at
+before update on public.financial_accounts
+for each row execute function private.set_updated_at();
+
 drop trigger if exists credit_cards_set_updated_at on public.credit_cards;
 create trigger credit_cards_set_updated_at
 before update on public.credit_cards
@@ -484,6 +580,11 @@ for each row execute function private.set_updated_at();
 drop trigger if exists payables_set_updated_at on public.payables;
 create trigger payables_set_updated_at
 before update on public.payables
+for each row execute function private.set_updated_at();
+
+drop trigger if exists monthly_plans_set_updated_at on public.monthly_plans;
+create trigger monthly_plans_set_updated_at
+before update on public.monthly_plans
 for each row execute function private.set_updated_at();
 
 drop trigger if exists category_budgets_set_updated_at on public.category_budgets;
@@ -540,6 +641,11 @@ begin
   insert into public.workspace_members (workspace_id, user_id, role)
   values (v_workspace, v_user, 'owner');
 
+  insert into public.financial_accounts
+    (workspace_id, name, account_type, initial_balance, is_default, created_by)
+  values
+    (v_workspace, 'Conta principal', 'checking', 0, true, v_user);
+
   insert into public.categories
     (workspace_id, name, kind, icon, sort_order, created_by)
   values
@@ -574,10 +680,14 @@ alter table public.profiles enable row level security;
 alter table public.workspaces enable row level security;
 alter table public.workspace_members enable row level security;
 alter table public.categories enable row level security;
+alter table public.financial_accounts enable row level security;
 alter table public.credit_cards enable row level security;
 alter table public.expenses enable row level security;
 alter table public.incomes enable row level security;
+alter table public.transfers enable row level security;
+alter table public.card_bill_payments enable row level security;
 alter table public.payables enable row level security;
+alter table public.monthly_plans enable row level security;
 alter table public.category_budgets enable row level security;
 alter table public.goals enable row level security;
 alter table public.goal_contributions enable row level security;
@@ -705,6 +815,20 @@ drop policy if exists categories_delete on public.categories;
 create policy categories_delete on public.categories for delete to authenticated
 using (private.is_workspace_member(workspace_id));
 
+drop policy if exists financial_accounts_select on public.financial_accounts;
+create policy financial_accounts_select on public.financial_accounts for select to authenticated
+using (private.is_workspace_member(workspace_id));
+drop policy if exists financial_accounts_insert on public.financial_accounts;
+create policy financial_accounts_insert on public.financial_accounts for insert to authenticated
+with check (private.is_workspace_member(workspace_id) and created_by = (select auth.uid()));
+drop policy if exists financial_accounts_update on public.financial_accounts;
+create policy financial_accounts_update on public.financial_accounts for update to authenticated
+using (private.is_workspace_member(workspace_id))
+with check (private.is_workspace_member(workspace_id));
+drop policy if exists financial_accounts_delete on public.financial_accounts;
+create policy financial_accounts_delete on public.financial_accounts for delete to authenticated
+using (private.is_workspace_member(workspace_id));
+
 drop policy if exists credit_cards_select on public.credit_cards;
 create policy credit_cards_select on public.credit_cards for select to authenticated
 using (private.is_workspace_member(workspace_id));
@@ -747,6 +871,26 @@ drop policy if exists incomes_delete on public.incomes;
 create policy incomes_delete on public.incomes for delete to authenticated
 using (private.is_workspace_member(workspace_id));
 
+drop policy if exists transfers_select on public.transfers;
+create policy transfers_select on public.transfers for select to authenticated
+using (private.is_workspace_member(workspace_id));
+drop policy if exists transfers_insert on public.transfers;
+create policy transfers_insert on public.transfers for insert to authenticated
+with check (private.is_workspace_member(workspace_id) and created_by = (select auth.uid()));
+drop policy if exists transfers_delete on public.transfers;
+create policy transfers_delete on public.transfers for delete to authenticated
+using (private.is_workspace_member(workspace_id));
+
+drop policy if exists card_bill_payments_select on public.card_bill_payments;
+create policy card_bill_payments_select on public.card_bill_payments for select to authenticated
+using (private.is_workspace_member(workspace_id));
+drop policy if exists card_bill_payments_insert on public.card_bill_payments;
+create policy card_bill_payments_insert on public.card_bill_payments for insert to authenticated
+with check (private.is_workspace_member(workspace_id) and created_by = (select auth.uid()));
+drop policy if exists card_bill_payments_delete on public.card_bill_payments;
+create policy card_bill_payments_delete on public.card_bill_payments for delete to authenticated
+using (private.is_workspace_member(workspace_id));
+
 drop policy if exists payables_select on public.payables;
 create policy payables_select on public.payables for select to authenticated
 using (private.is_workspace_member(workspace_id));
@@ -759,6 +903,20 @@ using (private.is_workspace_member(workspace_id))
 with check (private.is_workspace_member(workspace_id));
 drop policy if exists payables_delete on public.payables;
 create policy payables_delete on public.payables for delete to authenticated
+using (private.is_workspace_member(workspace_id));
+
+drop policy if exists monthly_plans_select on public.monthly_plans;
+create policy monthly_plans_select on public.monthly_plans for select to authenticated
+using (private.is_workspace_member(workspace_id));
+drop policy if exists monthly_plans_insert on public.monthly_plans;
+create policy monthly_plans_insert on public.monthly_plans for insert to authenticated
+with check (private.is_workspace_member(workspace_id) and created_by = (select auth.uid()));
+drop policy if exists monthly_plans_update on public.monthly_plans;
+create policy monthly_plans_update on public.monthly_plans for update to authenticated
+using (private.is_workspace_member(workspace_id))
+with check (private.is_workspace_member(workspace_id));
+drop policy if exists monthly_plans_delete on public.monthly_plans;
+create policy monthly_plans_delete on public.monthly_plans for delete to authenticated
 using (private.is_workspace_member(workspace_id));
 
 drop policy if exists category_budgets_select on public.category_budgets;
@@ -839,10 +997,14 @@ grant select, insert, update on public.profiles to authenticated;
 grant select, insert, update, delete on public.workspaces to authenticated;
 grant select, insert, update, delete on public.workspace_members to authenticated;
 grant select, insert, update, delete on public.categories to authenticated;
+grant select, insert, update, delete on public.financial_accounts to authenticated;
 grant select, insert, update, delete on public.credit_cards to authenticated;
 grant select, insert, update, delete on public.expenses to authenticated;
 grant select, insert, update, delete on public.incomes to authenticated;
+grant select, insert, delete on public.transfers to authenticated;
+grant select, insert, delete on public.card_bill_payments to authenticated;
 grant select, insert, update, delete on public.payables to authenticated;
+grant select, insert, update, delete on public.monthly_plans to authenticated;
 grant select, insert, update, delete on public.category_budgets to authenticated;
 grant select, insert, update, delete on public.goals to authenticated;
 grant select, insert, update, delete on public.goal_contributions to authenticated;
