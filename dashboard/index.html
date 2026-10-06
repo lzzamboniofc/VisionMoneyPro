@@ -87,7 +87,19 @@
         </article>
       </section>
 
-      <section class="dashboard-ops-grid">
+      <section class="dashboard-ops-grid dashboard-ops-three">
+        <a class="panel dashboard-op-card" href="../contas/">
+          <div>
+            <p class="eyebrow">CONTAS</p>
+            <h2>Saldo disponível</h2>
+            <p class="muted">Saldo consolidado das contas e carteiras ativas.</p>
+          </div>
+          <div class="op-value">
+            <strong id="dashboard-accounts-balance">R$ 0,00</strong>
+            <span id="dashboard-accounts-count">0 conta(s) ativa(s)</span>
+          </div>
+        </a>
+
         <a class="panel dashboard-op-card" href="../cartoes/">
           <div>
             <p class="eyebrow">CARTÕES</p>
@@ -182,6 +194,10 @@
         ? Math.round(((summary.incomeTotal - summary.expenseTotal) / summary.incomeTotal) * 100)
         : 0;
       document.getElementById("metric-saving").textContent = saving + "%";
+
+      const activeAccounts = api.getAccounts(false);
+      document.getElementById("dashboard-accounts-balance").textContent = api.formatCurrency(api.getTotalAccountsBalance());
+      document.getElementById("dashboard-accounts-count").textContent = activeAccounts.length + " conta(s) ativa(s)";
 
       const activeCards = api.getCards(false);
       const totalBills = api.getTotalCardBills();
