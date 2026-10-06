@@ -849,7 +849,7 @@
       saveArray(PAYABLES_KEY, getArray(PAYABLES_KEY).filter(item => item.id !== id));
     },
 
-    markPayablePaid(id, createExpense = false) {
+    markPayablePaid(id, createExpense = false, accountId = "") {
       const items = getArray(PAYABLES_KEY);
       const index = items.findIndex(item => item.id === id);
       if (index < 0) return null;
@@ -861,7 +861,8 @@
           amount: payable.amount,
           date: currentDate(),
           category: payable.category,
-          notes: payable.notes ? `Conta paga: ${payable.notes}` : "Gerado a partir de Contas a Pagar"
+          notes: payable.notes ? `Conta paga: ${payable.notes}` : "Gerado a partir de Contas a Pagar",
+          accountId
         });
         payable.linkedExpenseId = expense.id;
       }
@@ -878,7 +879,19 @@
       const items = getArray(PAYABLES_KEY);
       const index = items.findIndex(item => item.id === id);
       if (index < 0) return null;
-      items[index] = { ...items[index], status: "pending", paidAt: "", updatedAt: new Date().toISOString() };
+
+      const linkedExpenseId = items[index].linkedExpenseId;
+      if (linkedExpenseId) {
+        saveCollection("expense", getCollection("expense").filter(item => item.id !== linkedExpenseId));
+      }
+
+      items[index] = {
+        ...items[index],
+        status: "pending",
+        paidAt: "",
+        linkedExpenseId: "",
+        updatedAt: new Date().toISOString()
+      };
       saveArray(PAYABLES_KEY, items);
       return items[index];
     },
