@@ -10,6 +10,7 @@
   const PAYABLES_KEY = "vmp_demo_payables";
   const CUSTOM_CATEGORIES_KEY = "vmp_demo_custom_categories";
   const RECURRENCES_KEY = "vmp_demo_recurrences";
+  const MEMBERS_KEY = "vmp_demo_members";
 
   const safeParse = (value, fallback = null) => {
     try { return value ? JSON.parse(value) : fallback; } catch { return fallback; }
@@ -550,6 +551,73 @@
     },
 
 
+
+    getMembers() {
+      const profile = this.getProfile() || {};
+      const owner = {
+        id: "owner",
+        name: profile.name || "Você",
+        email: profile.email || "",
+        role: "owner",
+        status: "active",
+        owner: true
+      };
+      return [owner, ...getArray(MEMBERS_KEY).sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)))];
+    },
+
+    inviteMember(input) {
+      const email = String(input?.email || "").trim().toLocaleLowerCase("pt-BR").slice(0, 160);
+      const name = String(input?.name || "").trim().slice(0, 100);
+      const role = input?.role === "admin" ? "admin" : "member";
+      if (!email || !email.includes("@")) throw new Error("member_email_required");
+
+      const profileEmail = String(this.getProfile()?.email || "").trim().toLocaleLowerCase("pt-BR");
+      const members = getArray(MEMBERS_KEY);
+      if (email === profileEmail || members.some(item => String(item.email).toLocaleLowerCase("pt-BR") === email)) {
+        throw new Error("member_exists");
+      }
+
+      const record = {
+        id: newId(),
+        name: name || email.split("@")[0],
+        email,
+        role,
+        status: "invited",
+        createdAt: new Date().toISOString()
+      };
+      members.push(record);
+      saveArray(MEMBERS_KEY, members);
+
+      const workspace = this.getWorkspace() || { name: "Minhas finanças" };
+      this.saveWorkspace({
+        ...workspace,
+        mode: "shared",
+        partnerName: workspace.partnerName || record.name,
+        partnerEmail: workspace.partnerEmail || record.email
+      });
+      return record;
+    },
+
+    setMemberStatus(id, status) {
+      const members = getArray(MEMBERS_KEY);
+      const index = members.findIndex(item => item.id === id);
+      if (index < 0) return null;
+      members[index] = {
+        ...members[index],
+        status: status === "active" ? "active" : "invited",
+        updatedAt: new Date().toISOString()
+      };
+      saveArray(MEMBERS_KEY, members);
+      return members[index];
+    },
+
+    removeMember(id) {
+      const members = getArray(MEMBERS_KEY);
+      const before = members.length;
+      saveArray(MEMBERS_KEY, members.filter(item => item.id !== id));
+      return before !== getArray(MEMBERS_KEY).length;
+    },
+
     getRecurrences() {
       return getArray(RECURRENCES_KEY).slice().sort((a, b) =>
         Number(b.active !== false) - Number(a.active !== false) ||
@@ -721,7 +789,7 @@
       [
         PROFILE_KEY, WORKSPACE_KEY, EXPENSES_KEY, INCOMES_KEY, BUDGETS_KEY,
         GOALS_KEY, CONTRIBUTIONS_KEY, CARDS_KEY, PAYABLES_KEY,
-        CUSTOM_CATEGORIES_KEY, RECURRENCES_KEY
+        CUSTOM_CATEGORIES_KEY, RECURRENCES_KEY, MEMBERS_KEY
       ].forEach(key => localStorage.removeItem(key));
     }
   };
