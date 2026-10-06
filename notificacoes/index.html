@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Notificações · VisionMoneyPro</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <div class="dash-shell">
+    <aside class="sidebar">
+      <a class="brand" href="../"><span class="brand-mark">V</span><strong>VisionMoneyPro</strong></a>
+      <nav>
+        <a class="active" href="../dashboard/">Visão geral</a>
+        <a href="../movimentacoes/">Movimentações</a>
+        <a href="../planejamento/">Planejamento</a>
+        <a href="../analises/">Análises</a>
+        <a href="../configuracoes/">Configurações</a>
+      </nav>
+    </aside>
+
+    <main class="dash-main">
+      <header class="dash-head">
+        <div>
+          <p class="eyebrow">NOTIFICAÇÕES</p>
+          <h1>Central de alertas</h1>
+          <p class="muted dashboard-subtitle">Acompanhe vencimentos, orçamento, cartões, metas e outras situações que pedem atenção.</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn ghost" id="mark-all-unread" type="button">Marcar como não lidas</button>
+          <button class="btn primary" id="mark-all-read" type="button">Marcar tudo como lido</button>
+        </div>
+      </header>
+
+      <section class="metric-grid notification-metrics">
+        <article class="metric accent"><span>Não lidas</span><strong id="notification-unread-count">0</strong><small>Alertas pendentes</small></article>
+        <article class="metric overdue-metric"><span>Urgentes</span><strong id="notification-urgent-count">0</strong><small>Pedem ação imediata</small></article>
+        <article class="metric"><span>Atenção</span><strong id="notification-warning-count">0</strong><small>Acompanhe de perto</small></article>
+      </section>
+
+      <section class="notification-layout">
+        <article class="panel notification-center-panel">
+          <div class="section-head notification-filter-head">
+            <div><p class="eyebrow">ALERTAS</p><h2>Suas notificações</h2></div>
+            <div class="notification-filters">
+              <input id="notification-search" type="search" placeholder="Buscar alerta...">
+              <select id="notification-status-filter">
+                <option value="">Todas</option>
+                <option value="unread">Não lidas</option>
+                <option value="read">Lidas</option>
+              </select>
+              <select id="notification-type-filter">
+                <option value="">Todos os tipos</option>
+                <option value="budget">Orçamento</option>
+                <option value="payables">Contas a pagar</option>
+                <option value="cards">Cartões</option>
+                <option value="accounts">Contas</option>
+                <option value="goals">Metas</option>
+                <option value="recurrences">Recorrências</option>
+                <option value="saving">Economia</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="notification-empty" class="empty-state" hidden>
+            <strong>Nenhuma notificação encontrada.</strong>
+            <span>Os alertas aparecem conforme seus dados e preferências.</span>
+          </div>
+          <div id="notification-list" class="notification-list"></div>
+        </article>
+
+        <aside class="panel notification-preferences">
+          <p class="eyebrow">PREFERÊNCIAS</p>
+          <h2>O que você quer acompanhar?</h2>
+          <p class="muted">Nesta fase, os alertas são calculados localmente quando você abre o VisionMoneyPro.</p>
+
+          <div class="notification-pref-list">
+            <label><input type="checkbox" data-notification-pref="budget"><span><strong>Orçamento</strong><small>Limites próximos ou ultrapassados.</small></span></label>
+            <label><input type="checkbox" data-notification-pref="payables"><span><strong>Contas a pagar</strong><small>Vencimentos próximos e atrasos.</small></span></label>
+            <label><input type="checkbox" data-notification-pref="cards"><span><strong>Cartões</strong><small>Limite alto e faturas atrasadas.</small></span></label>
+            <label><input type="checkbox" data-notification-pref="accounts"><span><strong>Contas</strong><small>Saldo negativo nas carteiras.</small></span></label>
+            <label><input type="checkbox" data-notification-pref="goals"><span><strong>Metas</strong><small>Objetivos próximos do prazo.</small></span></label>
+            <label><input type="checkbox" data-notification-pref="recurrences"><span><strong>Recorrências</strong><small>Lançamentos pendentes ou próximos.</small></span></label>
+            <label><input type="checkbox" data-notification-pref="saving"><span><strong>Economia</strong><small>Mudanças relevantes na taxa de economia.</small></span></label>
+          </div>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+  <nav class="mobile-nav compact-mobile-nav">
+    <a class="active" href="../dashboard/"><span>⌂</span>Início</a>
+    <a href="../movimentacoes/"><span>↕</span>Movimentos</a>
+    <a href="../planejamento/"><span>◫</span>Planejar</a>
+    <a href="../analises/"><span>⌁</span>Análises</a>
+    <a href="../configuracoes/"><span>⚙</span>Ajustes</a>
+  </nav>
+
+  <script src="../assets/demo.js"></script>
+  <script src="../assets/notifications.js"></script>
+</body>
+</html>
