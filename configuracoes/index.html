@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Configurações · VisionMoneyPro</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <div class="dash-shell">
+    <aside class="sidebar">
+      <a class="brand" href="../"><span class="brand-mark">V</span><strong>VisionMoneyPro</strong></a>
+      <nav>
+        <a href="../dashboard/">Visão geral</a>
+        <a href="../gastos/">Gastos</a>
+        <a href="../receitas/">Receitas</a>
+        <a href="../cartoes/">Cartões e faturas</a>
+        <a href="../contas-a-pagar/">Contas a pagar</a>
+        <a href="../planejamento/">Planejamento</a>
+        <a href="../metas/">Metas</a>
+        <a href="../analises/">Análises</a>
+        <a class="active" href="./">Configurações</a>
+      </nav>
+    </aside>
+
+    <main class="dash-main">
+      <header class="dash-head">
+        <div>
+          <p class="eyebrow">CONFIGURAÇÕES</p>
+          <h1>Seu espaço, suas regras</h1>
+          <p class="muted dashboard-subtitle">Gerencie perfil, compartilhamento e os dados locais desta fase do MVP.</p>
+        </div>
+        <span class="pill">Demo local</span>
+      </header>
+
+      <div id="settings-status" class="notice settings-notice" hidden></div>
+
+      <section class="settings-grid">
+        <article class="panel">
+          <p class="eyebrow">PERFIL</p>
+          <h2>Dados pessoais</h2>
+          <form id="profile-settings-form" class="transaction-form settings-form">
+            <label class="field-wide">Nome
+              <input id="settings-name" maxlength="100" required>
+            </label>
+            <label class="field-wide">E-mail
+              <input id="settings-email" type="email" maxlength="160" required>
+            </label>
+            <div class="form-actions field-wide">
+              <button class="btn primary" type="submit">Salvar perfil</button>
+            </div>
+          </form>
+        </article>
+
+        <article class="panel">
+          <p class="eyebrow">ESPAÇO FINANCEIRO</p>
+          <h2>Uso individual ou compartilhado</h2>
+          <form id="workspace-settings-form" class="transaction-form settings-form">
+            <label class="field-wide">Nome do espaço
+              <input id="settings-workspace-name" maxlength="100" required>
+            </label>
+
+            <div class="field-wide settings-mode-row">
+              <label class="settings-mode-option">
+                <input type="radio" name="workspace_mode" value="individual">
+                <span><strong>Individual</strong><small>Somente você neste espaço.</small></span>
+              </label>
+              <label class="settings-mode-option">
+                <input type="radio" name="workspace_mode" value="shared">
+                <span><strong>Compartilhado</strong><small>Casal, família ou outra pessoa.</small></span>
+              </label>
+            </div>
+
+            <div id="settings-shared-fields" class="field-wide settings-shared-grid" hidden>
+              <label>Nome da pessoa
+                <input id="settings-partner-name" maxlength="100" placeholder="Opcional nesta fase">
+              </label>
+              <label>E-mail para convite
+                <input id="settings-partner-email" type="email" maxlength="160" placeholder="Opcional nesta fase">
+              </label>
+            </div>
+
+            <div class="form-actions field-wide">
+              <button class="btn primary" type="submit">Salvar espaço</button>
+            </div>
+          </form>
+        </article>
+
+        <article class="panel">
+          <p class="eyebrow">BACKUP LOCAL</p>
+          <h2>Exportar e restaurar</h2>
+          <p class="muted">Enquanto o banco não está conectado, você pode baixar uma cópia dos dados desta demonstração e restaurá-la depois.</p>
+          <div class="settings-actions">
+            <button class="btn ghost" id="export-data" type="button">Exportar backup</button>
+            <button class="btn ghost" id="import-data" type="button">Importar backup</button>
+            <input id="import-data-file" type="file" accept="application/json,.json" hidden>
+          </div>
+        </article>
+
+        <article class="panel">
+          <p class="eyebrow">INFRAESTRUTURA</p>
+          <h2>Status do produto</h2>
+          <div class="status-list">
+            <div><span class="status-dot ready"></span><p><strong>Frontend MVP</strong><small>GitHub Pages · modo estático</small></p><b>Ativo</b></div>
+            <div><span class="status-dot ready"></span><p><strong>Schema do banco</strong><small>Preparado no repositório, ainda não aplicado</small></p><b>Pronto</b></div>
+            <div><span class="status-dot pending"></span><p><strong>Autenticação e banco</strong><small>Supabase exclusivo ainda não conectado</small></p><b>Pendente</b></div>
+            <div><span class="status-dot pending"></span><p><strong>Assinaturas</strong><small>Cobrança será adicionada depois do MVP</small></p><b>Futuro</b></div>
+          </div>
+          <a class="btn ghost admin-preview-link" href="../admin/">Abrir prévia do painel Admin</a>
+        </article>
+
+        <article class="panel danger-zone">
+          <p class="eyebrow">DADOS LOCAIS</p>
+          <h2>Limpeza da demonstração</h2>
+          <p class="muted">Estas ações afetam apenas este navegador e não alteram nenhum banco Supabase.</p>
+          <div class="settings-actions">
+            <button class="btn ghost" id="clear-finance-data" type="button">Apagar só dados financeiros</button>
+            <button class="btn danger-button" id="clear-all-data" type="button">Apagar tudo e sair</button>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <nav class="mobile-nav mobile-nav-wide">
+    <a href="../dashboard/">Início</a>
+    <a href="../gastos/">Gastos</a>
+    <a href="../cartoes/">Cartões</a>
+    <a href="../planejamento/">Planejar</a>
+    <a href="../metas/">Metas</a>
+    <a href="../analises/">Análises</a>
+    <a class="active" href="./">Ajustes</a>
+  </nav>
+
+  <script src="../assets/demo.js"></script>
+  <script src="../assets/settings.js"></script>
+</body>
+</html>
