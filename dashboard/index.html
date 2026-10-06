@@ -12,7 +12,8 @@
       <a class="brand" href="../"><span class="brand-mark">V</span><strong>VisionMoneyPro</strong></a>
       <nav>
         <a class="active" href="./">Visão geral</a>
-        <span>Gastos</span>
+        <a href="../gastos/">Gastos</a>
+        <a href="../receitas/">Receitas</a>
         <span>Planejamento</span>
         <span>Metas</span>
         <a href="../onboarding/">Configurar espaço</a>
@@ -31,36 +32,55 @@
 
       <section class="metric-grid">
         <article class="metric accent">
-          <span>Saldo do mês</span><strong>R$ 8.420,00</strong><small>+12% em relação ao mês anterior</small>
+          <span>Saldo do mês</span>
+          <strong id="metric-balance">R$ 0,00</strong>
+          <small id="metric-balance-note">Receitas menos despesas do mês atual</small>
+        </article>
+        <article class="metric income-metric">
+          <span>Receitas</span>
+          <strong id="metric-income">R$ 0,00</strong>
+          <small id="metric-income-note">0 lançamento(s) neste mês</small>
         </article>
         <article class="metric">
-          <span>Receitas</span><strong>R$ 12.500,00</strong><small>3 entradas registradas</small>
+          <span>Despesas</span>
+          <strong id="metric-expense">R$ 0,00</strong>
+          <small id="metric-expense-note">0 lançamento(s) neste mês</small>
         </article>
         <article class="metric">
-          <span>Despesas</span><strong>R$ 4.080,00</strong><small>28 lançamentos</small>
-        </article>
-        <article class="metric">
-          <span>Metas</span><strong>3</strong><small>2 dentro do planejado</small>
+          <span>Economia</span>
+          <strong id="metric-saving">0%</strong>
+          <small>Percentual da receita preservado</small>
         </article>
       </section>
 
       <section class="dash-grid">
         <article class="panel">
-          <p class="eyebrow">FLUXO FINANCEIRO</p>
-          <h2>Seu mês em perspectiva</h2>
-          <p class="muted">Esta prévia será conectada aos dados reais quando o backend for ativado.</p>
-          <div class="mini-bars"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">MOVIMENTAÇÕES</p>
+              <h2>Atividade recente</h2>
+            </div>
+            <a class="btn ghost" href="../gastos/">Ver gastos</a>
+          </div>
+          <div class="recent-list" id="recent-list"></div>
+          <div class="empty-state" id="recent-empty" hidden>
+            <strong>Seu histórico ainda está vazio.</strong>
+            <span>Cadastre uma receita ou gasto para começar.</span>
+          </div>
         </article>
 
         <article class="panel">
-          <p class="eyebrow">VISÃO RÁPIDA</p>
-          <h2>Próximos recursos</h2>
+          <p class="eyebrow">ATALHOS</p>
+          <h2>Registrar agora</h2>
+          <p class="muted">Inclua uma movimentação e o resumo do mês será atualizado automaticamente.</p>
+          <div class="quick-actions">
+            <a class="btn primary" href="../gastos/">+ Novo gasto</a>
+            <a class="btn secondary" href="../receitas/">+ Nova receita</a>
+          </div>
           <div class="list">
-            <div>Gastos e receitas por categoria</div>
-            <div>Cartões e faturas</div>
-            <div>Contas a pagar</div>
-            <div>Metas e planejamento</div>
-            <div id="sharing-item">Conta individual ou compartilhada</div>
+            <div>Planejamento <span class="muted">· próxima etapa</span></div>
+            <div>Metas <span class="muted">· próxima etapa</span></div>
+            <div>Cartões e faturas <span class="muted">· em breve</span></div>
           </div>
         </article>
       </section>
@@ -69,9 +89,10 @@
         <div>
           <p class="eyebrow">AMBIENTE DE DEMONSTRAÇÃO</p>
           <h2 id="workspace-name">Minhas finanças</h2>
-          <p class="muted" id="sharing-copy">Você está vendo um exemplo local. Nenhum dado financeiro desta tela foi gravado em banco.</p>
+          <p class="muted" id="sharing-copy">Os dados desta fase ficam apenas neste navegador. Nenhuma informação foi enviada ao banco.</p>
         </div>
         <div class="actions compact-actions">
+          <button class="btn ghost" id="seed-demo" type="button">Carregar exemplo</button>
           <a class="btn ghost" href="../onboarding/">Alterar configuração</a>
           <button class="btn ghost" id="reset-demo" type="button">Limpar demonstração</button>
         </div>
@@ -79,10 +100,18 @@
     </main>
   </div>
 
+  <nav class="mobile-nav">
+    <a class="active" href="./">Início</a>
+    <a href="../gastos/">Gastos</a>
+    <a href="../receitas/">Receitas</a>
+    <a href="../onboarding/">Conta</a>
+  </nav>
+
   <script src="../assets/demo.js"></script>
   <script>
-    const profile = VisionMoneyProDemo.getProfile();
-    const workspace = VisionMoneyProDemo.getWorkspace();
+    const api = VisionMoneyProDemo;
+    const profile = api.getProfile();
+    const workspace = api.getWorkspace();
 
     if (profile?.name) {
       document.getElementById("greeting").textContent = "Olá, " + profile.name + ".";
@@ -98,18 +127,66 @@
         : "Seu espaço pessoal para organizar, planejar e acompanhar.";
       document.getElementById("sharing-copy").textContent = shared
         ? (workspace.partnerName
-            ? "Modo compartilhado configurado com " + workspace.partnerName + ". O convite real será ativado com o backend."
-            : "Modo compartilhado configurado. O convite real será ativado com o backend.")
+            ? "Modo compartilhado configurado com " + workspace.partnerName + ". O convite real será ativado quando conectarmos o backend."
+            : "Modo compartilhado configurado. O convite real será ativado quando conectarmos o backend.")
         : "Modo individual configurado. Você poderá convidar alguém futuramente sem perder seu histórico.";
-      document.getElementById("sharing-item").textContent = shared
-        ? "Compartilhamento e convites"
-        : "Convite opcional no futuro";
     }
 
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function renderFinance() {
+      const summary = api.getMonthSummary();
+      document.getElementById("metric-balance").textContent = api.formatCurrency(summary.balance);
+      document.getElementById("metric-income").textContent = api.formatCurrency(summary.incomeTotal);
+      document.getElementById("metric-expense").textContent = api.formatCurrency(summary.expenseTotal);
+      document.getElementById("metric-income-note").textContent = summary.incomeCount + " lançamento(s) neste mês";
+      document.getElementById("metric-expense-note").textContent = summary.expenseCount + " lançamento(s) neste mês";
+
+      const saving = summary.incomeTotal > 0
+        ? Math.round(((summary.incomeTotal - summary.expenseTotal) / summary.incomeTotal) * 100)
+        : 0;
+      document.getElementById("metric-saving").textContent = saving + "%";
+
+      const recent = api.getRecentTransactions(6);
+      const recentList = document.getElementById("recent-list");
+      const recentEmpty = document.getElementById("recent-empty");
+      recentEmpty.hidden = recent.length > 0;
+
+      recentList.innerHTML = recent.map(item => `
+        <div class="recent-item">
+          <div>
+            <strong>${escapeHtml(item.description)}</strong>
+            <small>${escapeHtml(item.category)} · ${api.formatDate(item.date)}</small>
+          </div>
+          <strong class="${item.kind === "income" ? "positive" : "negative"}">
+            ${item.kind === "income" ? "+" : "−"} ${api.formatCurrency(item.amount)}
+          </strong>
+        </div>
+      `).join("");
+    }
+
+    document.getElementById("seed-demo").addEventListener("click", () => {
+      const seeded = api.seedExampleData();
+      if (!seeded) {
+        window.alert("Já existem lançamentos nesta demonstração.");
+      }
+      renderFinance();
+    });
+
     document.getElementById("reset-demo").addEventListener("click", () => {
-      VisionMoneyProDemo.reset();
+      if (!window.confirm("Limpar perfil, configuração e todos os lançamentos locais?")) return;
+      api.reset();
       window.location.href = "../login/";
     });
+
+    renderFinance();
   </script>
 </body>
 </html>
