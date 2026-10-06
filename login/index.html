@@ -1,1 +1,82 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Entrar · VisionMoneyPro</title><link rel="stylesheet" href="../assets/styles.css"></head><body><main class="auth-shell"><div class="auth-wrap"><div class="auth-head"><a class="brand" href="../"><span class="brand-mark">V</span><strong>VisionMoneyPro</strong></a></div><section class="auth-card"><p class="eyebrow">SUA VIDA FINANCEIRA</p><h1>Entre ou crie sua conta.</h1><p class="muted">A interface já está publicada. O cadastro real será ativado quando conectarmos o Supabase exclusivo do VisionMoneyPro.</p><div class="notice">Esta página está funcionando como prévia do produto. Nenhum dado digitado aqui será enviado ou armazenado neste momento.</div><div class="auth-grid"><form class="form-box" onsubmit="return false"><h2>Entrar</h2><label>E-mail<input type="email" placeholder="voce@email.com"></label><label>Senha<input type="password" placeholder="••••••••••••"></label><button class="btn primary" type="button" onclick="alert('O login será ativado quando conectarmos o Supabase do VisionMoneyPro.')">Entrar</button></form><form class="form-box" onsubmit="return false"><h2>Criar conta</h2><label>Nome<input placeholder="Seu nome"></label><label>E-mail<input type="email" placeholder="voce@email.com"></label><label>Senha<input type="password" placeholder="12+ caracteres"></label><button class="btn secondary" type="button" onclick="alert('O cadastro será ativado quando conectarmos o Supabase do VisionMoneyPro.')">Começar agora</button></form></div><div class="demo-link"><a class="btn ghost" href="../dashboard/">Ver demonstração do dashboard</a></div></section></div></main></body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Entrar · VisionMoneyPro</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <main class="auth-shell">
+    <div class="auth-wrap">
+      <div class="auth-head">
+        <a class="brand" href="../"><span class="brand-mark">V</span><strong>VisionMoneyPro</strong></a>
+      </div>
+
+      <section class="auth-card">
+        <p class="eyebrow">SUA VIDA FINANCEIRA</p>
+        <h1>Entre ou crie sua conta.</h1>
+        <p class="muted">Estamos validando a experiência antes de conectar o backend definitivo.</p>
+
+        <div class="notice">Modo demonstração: a senha não é armazenada nem enviada. Para testar o fluxo, crie um perfil local e siga para o onboarding.</div>
+
+        <div class="auth-grid">
+          <form id="login-form" class="form-box">
+            <h2>Entrar</h2>
+            <label>E-mail<input id="login-email" type="email" placeholder="voce@email.com" required></label>
+            <label>Senha<input type="password" placeholder="••••••••••••" required></label>
+            <button class="btn primary" type="submit">Entrar</button>
+            <small class="muted">Se já existir uma demonstração neste navegador, você irá direto ao dashboard.</small>
+          </form>
+
+          <form id="signup-form" class="form-box">
+            <h2>Criar conta</h2>
+            <label>Nome<input id="signup-name" minlength="2" maxlength="100" placeholder="Seu nome" required></label>
+            <label>E-mail<input id="signup-email" type="email" maxlength="160" placeholder="voce@email.com" required></label>
+            <label>Senha<input type="password" minlength="12" placeholder="12+ caracteres" required></label>
+            <button class="btn secondary" type="submit">Começar agora</button>
+          </form>
+        </div>
+
+        <div class="demo-link">
+          <a class="btn ghost" href="../dashboard/">Ver demonstração do dashboard</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="../assets/demo.js"></script>
+  <script>
+    const profile = VisionMoneyProDemo.getProfile();
+    if (profile?.name) document.getElementById("signup-name").value = profile.name;
+    if (profile?.email) {
+      document.getElementById("signup-email").value = profile.email;
+      document.getElementById("login-email").value = profile.email;
+    }
+
+    document.getElementById("signup-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      VisionMoneyProDemo.saveProfile({
+        name: document.getElementById("signup-name").value,
+        email: document.getElementById("signup-email").value
+      });
+      window.location.href = "../onboarding/";
+    });
+
+    document.getElementById("login-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const current = VisionMoneyProDemo.getProfile();
+      const workspace = VisionMoneyProDemo.getWorkspace();
+
+      if (current?.name && workspace) {
+        window.location.href = "../dashboard/";
+        return;
+      }
+
+      const email = document.getElementById("login-email").value;
+      VisionMoneyProDemo.saveProfile({ name: current?.name || "Usuário", email });
+      window.location.href = "../onboarding/";
+    });
+  </script>
+</body>
+</html>
