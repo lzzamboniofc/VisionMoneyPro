@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Membros · VisionMoneyPro</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <div class="dash-shell">
+    <aside class="sidebar">
+      <a class="brand" href="../"><span class="brand-mark">V</span><strong>VisionMoneyPro</strong></a>
+      <nav>
+        <a href="../dashboard/">Visão geral</a>
+        <a href="../movimentacoes/">Movimentações</a>
+        <a href="../planejamento/">Planejamento</a>
+        <a href="../analises/">Análises</a>
+        <a class="active" href="../configuracoes/">Configurações</a>
+      </nav>
+    </aside>
+
+    <main class="dash-main">
+      <header class="dash-head">
+        <div>
+          <p class="eyebrow">COMPARTILHAMENTO</p>
+          <h1>Membros do espaço</h1>
+          <p class="muted dashboard-subtitle">Valide como convites e papéis funcionarão quando o backend estiver ativo.</p>
+        </div>
+        <a class="btn ghost" href="../configuracoes/">Voltar às configurações</a>
+      </header>
+
+      <div id="member-status" class="notice member-notice" hidden></div>
+
+      <section class="metric-grid member-metrics">
+        <article class="metric accent"><span>Workspace</span><strong class="metric-text" id="member-workspace-name">Minhas finanças</strong><small id="member-mode">Individual</small></article>
+        <article class="metric income-metric"><span>Membros ativos</span><strong id="member-active-count">1</strong><small>Pessoas com acesso</small></article>
+        <article class="metric"><span>Convites pendentes</span><strong id="member-invite-count">0</strong><small>Aguardando aceite</small></article>
+      </section>
+
+      <section class="member-layout">
+        <article class="panel member-editor">
+          <p class="eyebrow">CONVITE</p>
+          <h2>Adicionar pessoa</h2>
+          <form id="member-form" class="transaction-form">
+            <label class="field-wide">Nome
+              <input id="member-name" maxlength="100" placeholder="Nome da pessoa">
+            </label>
+            <label class="field-wide">E-mail
+              <input id="member-email" type="email" maxlength="160" placeholder="pessoa@email.com" required>
+            </label>
+            <label class="field-wide">Papel
+              <select id="member-role">
+                <option value="member">Membro</option>
+                <option value="admin">Administrador do espaço</option>
+              </select>
+            </label>
+            <div class="form-actions field-wide">
+              <button class="btn primary" type="submit">Adicionar convite</button>
+            </div>
+          </form>
+          <div class="notice member-info">Modo demonstração: nenhum e-mail é enviado. “Simular aceite” serve apenas para validar a experiência.</div>
+        </article>
+
+        <article class="panel">
+          <div class="section-head">
+            <div><p class="eyebrow">ACESSO</p><h2>Pessoas neste workspace</h2></div>
+            <span class="pill">Demo local</span>
+          </div>
+          <div id="member-list" class="member-list"></div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <nav class="mobile-nav compact-mobile-nav">
+    <a href="../dashboard/"><span>⌂</span>Início</a>
+    <a href="../movimentacoes/"><span>↕</span>Movimentos</a>
+    <a href="../planejamento/"><span>◫</span>Planejar</a>
+    <a href="../analises/"><span>⌁</span>Análises</a>
+    <a class="active" href="../configuracoes/"><span>⚙</span>Ajustes</a>
+  </nav>
+
+  <script src="../assets/demo.js"></script>
+  <script src="../assets/members.js"></script>
+</body>
+</html>
