@@ -125,6 +125,21 @@
         </a>
       </section>
 
+      <section class="panel dashboard-insights-panel">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">INSIGHTS</p>
+            <h2>O que merece sua atenção</h2>
+          </div>
+          <span class="pill" id="dashboard-insight-count">0 alertas</span>
+        </div>
+        <div id="dashboard-insights" class="dashboard-insights"></div>
+        <div id="dashboard-insights-empty" class="empty-state compact-empty" hidden>
+          <strong>Nenhum alerta importante agora.</strong>
+          <span>Continue registrando seus dados para receber comparações e avisos.</span>
+        </div>
+      </section>
+
       <section class="panel dashboard-info-panel">
         <div>
           <p class="eyebrow">AMBIENTE DE DEMONSTRAÇÃO</p>
@@ -209,6 +224,20 @@
       document.getElementById("dashboard-payables-note").textContent = payableSummary.overdueCount > 0
         ? payableSummary.pendingCount + " pendente(s) · " + payableSummary.overdueCount + " atrasada(s)"
         : payableSummary.pendingCount + " pendente(s)";
+
+      const insights = api.getFinancialInsights();
+      const insightList = document.getElementById("dashboard-insights");
+      const insightEmpty = document.getElementById("dashboard-insights-empty");
+      document.getElementById("dashboard-insight-count").textContent =
+        insights.length + (insights.length === 1 ? " alerta" : " alertas");
+      insightEmpty.hidden = insights.length > 0;
+      insightList.innerHTML = insights.map(item => `
+        <a class="dashboard-insight ${item.tone}" href="${item.href}">
+          <span class="dashboard-insight-icon">${escapeHtml(item.icon)}</span>
+          <div><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.text)}</p></div>
+          <span class="movement-arrow">→</span>
+        </a>
+      `).join("");
 
       const recent = api.getRecentTransactions(6);
       const recentList = document.getElementById("recent-list");
