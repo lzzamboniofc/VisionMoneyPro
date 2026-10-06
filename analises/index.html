@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Análises · VisionMoneyPro</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <div class="dash-shell">
+    <aside class="sidebar">
+      <a class="brand" href="../"><span class="brand-mark">V</span><strong>VisionMoneyPro</strong></a>
+      <nav>
+        <a href="../dashboard/">Visão geral</a>
+        <a href="../gastos/">Gastos</a>
+        <a href="../receitas/">Receitas</a>
+        <a href="../cartoes/">Cartões e faturas</a>
+        <a href="../contas-a-pagar/">Contas a pagar</a>
+        <a href="../planejamento/">Planejamento</a>
+        <a href="../metas/">Metas</a>
+        <a class="active" href="./">Análises</a>
+        <a href="../configuracoes/">Configurações</a>
+      </nav>
+    </aside>
+
+    <main class="dash-main">
+      <header class="dash-head">
+        <div>
+          <p class="eyebrow">ANÁLISES</p>
+          <h1>Entenda seus números</h1>
+          <p class="muted dashboard-subtitle">Indicadores calculados a partir dos seus lançamentos locais.</p>
+        </div>
+        <div class="header-control">
+          <label>Mês analisado
+            <input class="month-picker" id="analytics-month" type="month">
+          </label>
+        </div>
+      </header>
+
+      <section class="metric-grid">
+        <article class="metric accent"><span>Saldo do mês</span><strong id="analytics-balance">R$ 0,00</strong><small>Receitas menos despesas</small></article>
+        <article class="metric income-metric"><span>Taxa de economia</span><strong id="analytics-saving">0%</strong><small>Percentual preservado da renda</small></article>
+        <article class="metric"><span>Maior categoria</span><strong class="metric-text" id="analytics-top-category">—</strong><small>Categoria com maior gasto</small></article>
+        <article class="metric"><span>Ticket médio</span><strong id="analytics-average-expense">R$ 0,00</strong><small>Média por despesa</small></article>
+      </section>
+
+      <section class="analytics-grid">
+        <article class="panel">
+          <div class="section-head">
+            <div><p class="eyebrow">EVOLUÇÃO</p><h2>Receitas × despesas</h2></div>
+            <div class="chart-legend"><span class="income-dot">Receitas</span><span class="expense-dot">Despesas</span></div>
+          </div>
+          <div class="trend-chart" id="analytics-trend"></div>
+        </article>
+
+        <article class="panel">
+          <p class="eyebrow">ORÇAMENTO</p>
+          <h2>Planejado × realizado</h2>
+          <div class="analysis-kpis">
+            <div><span>Planejado</span><strong id="analytics-budget-planned">R$ 0,00</strong></div>
+            <div><span>Gasto</span><strong id="analytics-budget-spent">R$ 0,00</strong></div>
+            <div><span>Uso</span><strong id="analytics-budget-usage">—</strong></div>
+          </div>
+          <div class="analysis-track budget-analysis-track"><span id="analytics-budget-track"></span></div>
+          <p class="muted analysis-status" id="analytics-budget-status">Nenhum orçamento definido para este mês.</p>
+          <a class="btn ghost" href="../planejamento/">Ajustar planejamento</a>
+        </article>
+      </section>
+
+      <section class="panel analytics-category-panel">
+        <div class="section-head">
+          <div><p class="eyebrow">CATEGORIAS</p><h2>Onde seu dinheiro está indo</h2></div>
+          <a class="btn ghost" href="../gastos/">Ver lançamentos</a>
+        </div>
+        <div id="analytics-categories-empty" class="empty-state" hidden>
+          <strong>Sem gastos neste mês.</strong>
+          <span>Cadastre despesas para visualizar a distribuição por categoria.</span>
+        </div>
+        <div class="analysis-list" id="analytics-categories"></div>
+      </section>
+    </main>
+  </div>
+
+  <nav class="mobile-nav mobile-nav-wide">
+    <a href="../dashboard/">Início</a>
+    <a href="../gastos/">Gastos</a>
+    <a href="../receitas/">Receitas</a>
+    <a href="../cartoes/">Cartões</a>
+    <a href="../contas-a-pagar/">Contas</a>
+    <a href="../planejamento/">Planejar</a>
+    <a href="../metas/">Metas</a>
+    <a class="active" href="./">Análises</a>
+  </nav>
+
+  <script src="../assets/demo.js"></script>
+  <script src="../assets/analytics.js"></script>
+</body>
+</html>
