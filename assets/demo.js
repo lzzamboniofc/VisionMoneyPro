@@ -11,6 +11,7 @@
   const CUSTOM_CATEGORIES_KEY = "vmp_demo_custom_categories";
   const RECURRENCES_KEY = "vmp_demo_recurrences";
   const MEMBERS_KEY = "vmp_demo_members";
+  const PLANNING_INCOME_KEY = "vmp_demo_planning_income";
 
   const safeParse = (value, fallback = null) => {
     try { return value ? JSON.parse(value) : fallback; } catch { return fallback; }
@@ -253,6 +254,49 @@
       };
     },
 
+    getPlanningIncome(month = currentMonth()) {
+      const items = getArray(PLANNING_INCOME_KEY);
+      const record = items.find(item => item.month === month);
+      return Number(record?.amount || 0);
+    },
+
+    setPlanningIncome(month = currentMonth(), amount = 0) {
+      const value = normalizeMoney(amount);
+      if (!(value > 0)) throw new Error("planning_income_required");
+
+      const items = getArray(PLANNING_INCOME_KEY);
+      const index = items.findIndex(item => item.month === month);
+      const record = {
+        month,
+        amount: value,
+        updatedAt: new Date().toISOString()
+      };
+
+      if (index >= 0) items[index] = record;
+      else items.push(record);
+      saveArray(PLANNING_INCOME_KEY, items);
+      return record;
+    },
+
+    removePlanningIncome(month = currentMonth()) {
+      saveArray(
+        PLANNING_INCOME_KEY,
+        getArray(PLANNING_INCOME_KEY).filter(item => item.month !== month)
+      );
+    },
+
+    getBudgetAllocation(month = currentMonth()) {
+      const income = this.getPlanningIncome(month);
+      const allocated = this.getBudgets(month)
+        .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+      return {
+        income,
+        allocated: Math.round(allocated * 100) / 100,
+        available: Math.max(0, Math.round((income - allocated) * 100) / 100),
+        percent: income > 0 ? Math.min(100, Math.round((allocated / income) * 100)) : 0
+      };
+    },
+
     getBudgets(month = currentMonth()) {
       return getArray(BUDGETS_KEY)
         .filter(item => item.month === month)
@@ -264,8 +308,22 @@
       if (!(value > 0)) throw new Error("budget_amount_required");
       if (!getCategoryList("expense").includes(category)) throw new Error("invalid_category");
 
+      const income = this.getPlanningIncome(month);
+      if (!(income > 0)) throw new Error("planning_income_required");
+
       const budgets = getArray(BUDGETS_KEY);
       const index = budgets.findIndex(item => item.month === month && item.category === category);
+      const allocatedElsewhere = budgets
+        .filter((item, itemIndex) => item.month === month && itemIndex !== index)
+        .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+
+      if (allocatedElsewhere + value > income + 0.001) {
+        const available = Math.max(0, Math.round((income - allocatedElsewhere) * 100) / 100);
+        const error = new Error("budget_exceeds_income");
+        error.available = available;
+        throw error;
+      }
+
       const record = {
         id: index >= 0 ? budgets[index].id : newId(),
         month,
@@ -789,7 +847,7 @@
       [
         PROFILE_KEY, WORKSPACE_KEY, EXPENSES_KEY, INCOMES_KEY, BUDGETS_KEY,
         GOALS_KEY, CONTRIBUTIONS_KEY, CARDS_KEY, PAYABLES_KEY,
-        CUSTOM_CATEGORIES_KEY, RECURRENCES_KEY, MEMBERS_KEY
+        CUSTOM_CATEGORIES_KEY, RECURRENCES_KEY, MEMBERS_KEY, PLANNING_INCOME_KEY
       ].forEach(key => localStorage.removeItem(key));
     }
   };
