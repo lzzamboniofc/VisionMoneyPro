@@ -899,3 +899,74 @@ h1,h2,h3,strong{letter-spacing:-.018em}
   .analysis-track span{background:#777!important}
   @page{size:A4;margin:14mm}
 }
+
+/* Budget progress fix + consistent internal page rhythm */
+.dash-main > section + section{margin-top:18px}
+.dash-main > .notice:not([hidden]) + section{margin-top:18px}
+
+.allocation-overview{margin-top:20px}
+.allocation-track{
+  position:relative;
+  display:grid;
+  place-items:center;
+  height:18px;
+  margin:0 0 10px;
+  overflow:hidden;
+}
+.allocation-track>.allocation-track-fill{
+  position:absolute;
+  inset:0 auto 0 0;
+  width:var(--progress,0%);
+  max-width:100%;
+  background:linear-gradient(90deg,#5c49c7,#9c89ff);
+  transition:width .28s ease;
+}
+.allocation-track-label{
+  position:relative;
+  z-index:1;
+  color:#fff;
+  font-size:.68rem;
+  line-height:1;
+  text-shadow:0 1px 3px rgba(0,0,0,.7);
+}
+.allocation-foot{margin-top:0}
+
+.budget-row{
+  display:grid;
+  gap:12px;
+  padding:18px 0;
+}
+.budget-row .budget-usage-track{
+  position:relative;
+  display:grid;
+  place-items:center;
+  height:16px;
+  margin:0;
+  overflow:hidden;
+}
+.budget-usage-track>.budget-progress-fill{
+  position:absolute;
+  inset:0 auto 0 0;
+  width:var(--progress,0%);
+  max-width:100%;
+  background:linear-gradient(90deg,var(--violet),var(--violet2));
+  transition:width .28s ease;
+}
+.budget-usage-track.over-limit>.budget-progress-fill{
+  background:linear-gradient(90deg,#d55369,#fb7185);
+}
+.progress-track-label{
+  position:relative;
+  z-index:1;
+  color:#f5f3ff;
+  font-size:.64rem;
+  line-height:1;
+  text-shadow:0 1px 3px rgba(0,0,0,.72);
+}
+.budget-actions{margin-top:2px}
+.payable-layout{margin-top:18px}
+
+@media(max-width:680px){
+  .dash-main > section + section{margin-top:16px}
+  .budget-row{gap:10px}
+}
