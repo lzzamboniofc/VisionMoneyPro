@@ -16,6 +16,8 @@
   const TRANSFERS_KEY = "vmp_demo_transfers";
   const CARD_BILL_PAYMENTS_KEY = "vmp_demo_card_bill_payments";
   const IMPORT_HISTORY_KEY = "vmp_demo_import_history";
+  const NOTIFICATION_READ_KEY = "vmp_demo_notification_read";
+  const NOTIFICATION_PREFS_KEY = "vmp_demo_notification_prefs";
 
   const safeParse = (value, fallback = null) => {
     try { return value ? JSON.parse(value) : fallback; } catch { return fallback; }
@@ -1249,6 +1251,166 @@
         .slice(0, 8);
     },
 
+
+    getNotificationPreferences() {
+      const defaults = {
+        budget: true,
+        payables: true,
+        cards: true,
+        accounts: true,
+        goals: true,
+        recurrences: true,
+        saving: true
+      };
+      const saved = safeParse(localStorage.getItem(NOTIFICATION_PREFS_KEY), {});
+      return { ...defaults, ...(saved && typeof saved === "object" ? saved : {}) };
+    },
+
+    saveNotificationPreferences(input = {}) {
+      const current = this.getNotificationPreferences();
+      const next = { ...current };
+      Object.keys(current).forEach(key => {
+        if (Object.prototype.hasOwnProperty.call(input, key)) {
+          next[key] = Boolean(input[key]);
+        }
+      });
+      localStorage.setItem(NOTIFICATION_PREFS_KEY, JSON.stringify(next));
+      return next;
+    },
+
+    getNotifications(includeRead = true) {
+      const preferences = this.getNotificationPreferences();
+      const readIds = getArray(NOTIFICATION_READ_KEY);
+      const items = [];
+
+      const inferCategory = (id) => {
+        if (String(id).startsWith("saving_")) return "saving";
+        if (String(id).startsWith("budget_")) return "budget";
+        if (String(id).startsWith("payables_")) return "payables";
+        if (String(id).startsWith("card_") || String(id).startsWith("bill_")) return "cards";
+        if (String(id).startsWith("negative_account_")) return "accounts";
+        return "saving";
+      };
+
+      this.getFinancialInsights().forEach(insight => {
+        const category = inferCategory(insight.id);
+        if (!preferences[category]) return;
+        items.push({
+          ...insight,
+          category,
+          read: readIds.includes(insight.id),
+          timeLabel: "Agora"
+        });
+      });
+
+      if (preferences.goals) {
+        const today = new Date(currentDate() + "T12:00:00");
+        this.getGoals().filter(goal => !goal.completed && goal.targetDate).forEach(goal => {
+          const due = new Date(goal.targetDate + "T12:00:00");
+          const days = Math.ceil((due - today) / 86400000);
+          const progress = this.getGoalProgress(goal.id);
+
+          if (days < 0 && progress.remaining > 0) {
+            const id = "goal_overdue_" + goal.id;
+            items.push({
+              id,
+              category: "goals",
+              tone: "danger",
+              icon: "◎",
+              title: `Meta atrasada: ${goal.name}`,
+              text: `O prazo terminou e ainda faltam ${this.formatCurrency(progress.remaining)}.`,
+              href: "../metas/",
+              read: readIds.includes(id),
+              timeLabel: "Meta"
+            });
+          } else if (days >= 0 && days <= 30 && progress.remaining > 0) {
+            const id = "goal_due_" + goal.id;
+            items.push({
+              id,
+              category: "goals",
+              tone: days <= 7 ? "warning" : "info",
+              icon: "◎",
+              title: `Meta próxima do prazo: ${goal.name}`,
+              text: `Faltam ${days} dia(s) e ${this.formatCurrency(progress.remaining)} para atingir o objetivo.`,
+              href: "../metas/",
+              read: readIds.includes(id),
+              timeLabel: "Meta"
+            });
+          }
+        });
+      }
+
+      if (preferences.recurrences) {
+        const today = currentDate();
+        const todayDate = new Date(today + "T12:00:00");
+        const inThree = new Date(todayDate);
+        inThree.setDate(inThree.getDate() + 3);
+
+        this.getRecurrences().filter(item => item.active !== false).forEach(item => {
+          const next = new Date(item.nextDate + "T12:00:00");
+          if (item.nextDate <= today) {
+            const id = "recurrence_due_" + item.id;
+            items.push({
+              id,
+              category: "recurrences",
+              tone: "warning",
+              icon: "↻",
+              title: `Recorrência pendente: ${item.description}`,
+              text: `${this.formatCurrency(item.amount)} deveria ser gerado em ${this.formatDate(item.nextDate)}.`,
+              href: "../recorrencias/",
+              read: readIds.includes(id),
+              timeLabel: "Recorrência"
+            });
+          } else if (next <= inThree) {
+            const id = "recurrence_soon_" + item.id;
+            items.push({
+              id,
+              category: "recurrences",
+              tone: "info",
+              icon: "↻",
+              title: `Recorrência próxima: ${item.description}`,
+              text: `${this.formatCurrency(item.amount)} está previsto para ${this.formatDate(item.nextDate)}.`,
+              href: "../recorrencias/",
+              read: readIds.includes(id),
+              timeLabel: "Recorrência"
+            });
+          }
+        });
+      }
+
+      const toneOrder = { danger: 0, warning: 1, info: 2, positive: 3 };
+      const sorted = items.sort((a, b) =>
+        Number(a.read) - Number(b.read) ||
+        (toneOrder[a.tone] ?? 9) - (toneOrder[b.tone] ?? 9) ||
+        String(a.title).localeCompare(String(b.title), "pt-BR")
+      );
+
+      return includeRead ? sorted : sorted.filter(item => !item.read);
+    },
+
+    markNotificationRead(id) {
+      const value = String(id || "");
+      if (!value) return;
+      const ids = getArray(NOTIFICATION_READ_KEY);
+      if (!ids.includes(value)) {
+        ids.push(value);
+        saveArray(NOTIFICATION_READ_KEY, ids.slice(-300));
+      }
+    },
+
+    markAllNotificationsRead() {
+      const ids = this.getNotifications(true).map(item => item.id);
+      saveArray(NOTIFICATION_READ_KEY, [...new Set(ids)].slice(-300));
+    },
+
+    markAllNotificationsUnread() {
+      saveArray(NOTIFICATION_READ_KEY, []);
+    },
+
+    getUnreadNotificationCount() {
+      return this.getNotifications(false).length;
+    },
+
     getRecentTransactions(limit = 6) {
       const expenses = getCollection("expense").map(item => ({ ...item, kind: "expense" }));
       const incomes = getCollection("income").map(item => ({ ...item, kind: "income" }));
@@ -1329,7 +1491,8 @@
         PROFILE_KEY, WORKSPACE_KEY, EXPENSES_KEY, INCOMES_KEY, BUDGETS_KEY,
         GOALS_KEY, CONTRIBUTIONS_KEY, CARDS_KEY, PAYABLES_KEY,
         CUSTOM_CATEGORIES_KEY, RECURRENCES_KEY, MEMBERS_KEY, PLANNING_INCOME_KEY,
-        ACCOUNTS_KEY, TRANSFERS_KEY, CARD_BILL_PAYMENTS_KEY, IMPORT_HISTORY_KEY
+        ACCOUNTS_KEY, TRANSFERS_KEY, CARD_BILL_PAYMENTS_KEY, IMPORT_HISTORY_KEY,
+        NOTIFICATION_READ_KEY, NOTIFICATION_PREFS_KEY
       ].forEach(key => localStorage.removeItem(key));
     }
   };
