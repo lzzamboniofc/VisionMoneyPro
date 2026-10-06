@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Primeiros passos · VisionMoneyPro</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <main class="auth-shell">
+    <div class="auth-wrap onboarding-wrap">
+      <div class="auth-head">
+        <a class="brand" href="../"><span class="brand-mark">V</span><strong>VisionMoneyPro</strong></a>
+      </div>
+
+      <section class="auth-card">
+        <div class="step-row">
+          <span class="eyebrow">PRIMEIROS PASSOS</span>
+          <span class="pill">Etapa 1 de 1</span>
+        </div>
+        <h1>Como você quer organizar suas finanças?</h1>
+        <p class="muted">Essa escolha cria o formato do seu espaço financeiro. Você poderá compartilhar depois, mesmo começando sozinho.</p>
+
+        <form id="onboarding-form">
+          <div class="mode-grid">
+            <label class="mode-card selected" data-mode-card="individual">
+              <input type="radio" name="mode" value="individual" checked>
+              <span class="mode-icon">1</span>
+              <strong>Só para mim</strong>
+              <small>Controle pessoal, sem outros membros.</small>
+            </label>
+
+            <label class="mode-card" data-mode-card="shared">
+              <input type="radio" name="mode" value="shared">
+              <span class="mode-icon">2+</span>
+              <strong>Compartilhar</strong>
+              <small>Casal, família ou outra pessoa com acesso ao mesmo espaço.</small>
+            </label>
+          </div>
+
+          <div class="onboarding-fields">
+            <label>Nome do espaço financeiro
+              <input id="workspace-name" value="Minhas finanças" maxlength="100" required>
+            </label>
+
+            <div id="shared-fields" class="shared-fields" hidden>
+              <label>Nome da pessoa que você pretende convidar
+                <input id="partner-name" maxlength="100" placeholder="Opcional por enquanto">
+              </label>
+              <label>E-mail para convite
+                <input id="partner-email" type="email" maxlength="160" placeholder="Opcional por enquanto">
+              </label>
+              <p class="muted mini-note">O convite real será habilitado quando conectarmos o backend. Por enquanto isso serve para validar a experiência.</p>
+            </div>
+          </div>
+
+          <div class="actions onboarding-actions">
+            <button class="btn primary" type="submit">Criar meu espaço</button>
+            <a class="btn ghost" href="../dashboard/">Pular e ver dashboard</a>
+          </div>
+        </form>
+
+        <div class="notice">Modo demonstração: as escolhas ficam apenas neste navegador via armazenamento local. Nada é enviado ao banco.</div>
+      </section>
+    </div>
+  </main>
+
+  <script src="../assets/demo.js"></script>
+  <script>
+    const form = document.getElementById("onboarding-form");
+    const cards = [...document.querySelectorAll("[data-mode-card]")];
+    const sharedFields = document.getElementById("shared-fields");
+
+    function syncMode() {
+      const mode = form.elements.mode.value;
+      cards.forEach(card => card.classList.toggle("selected", card.dataset.modeCard === mode));
+      sharedFields.hidden = mode !== "shared";
+    }
+
+    form.addEventListener("change", syncMode);
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const mode = form.elements.mode.value;
+      VisionMoneyProDemo.saveWorkspace({
+        mode,
+        name: document.getElementById("workspace-name").value,
+        partnerName: document.getElementById("partner-name").value,
+        partnerEmail: document.getElementById("partner-email").value
+      });
+      window.location.href = "../dashboard/";
+    });
+
+    const existing = VisionMoneyProDemo.getWorkspace();
+    if (existing) {
+      const radio = form.querySelector('input[value="' + existing.mode + '"]');
+      if (radio) radio.checked = true;
+      document.getElementById("workspace-name").value = existing.name || "Minhas finanças";
+      document.getElementById("partner-name").value = existing.partnerName || "";
+      document.getElementById("partner-email").value = existing.partnerEmail || "";
+    }
+    syncMode();
+  </script>
+</body>
+</html>
