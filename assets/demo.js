@@ -8,6 +8,8 @@
   const CONTRIBUTIONS_KEY = "vmp_demo_goal_contributions";
   const CARDS_KEY = "vmp_demo_cards";
   const PAYABLES_KEY = "vmp_demo_payables";
+  const CUSTOM_CATEGORIES_KEY = "vmp_demo_custom_categories";
+  const RECURRENCES_KEY = "vmp_demo_recurrences";
 
   const safeParse = (value, fallback = null) => {
     try { return value ? JSON.parse(value) : fallback; } catch { return fallback; }
@@ -35,6 +37,14 @@
     "Salário", "Freelance", "Rendimentos", "Outras rendas"
   ];
 
+  function getCategoryList(kind) {
+    const custom = getArray(CUSTOM_CATEGORIES_KEY)
+      .filter(item => item.kind === kind)
+      .map(item => item.name);
+    const defaults = kind === "income" ? incomeCategories : expenseCategories;
+    return [...new Set([...defaults, ...custom])];
+  }
+
   function getCollection(kind) {
     const key = kind === "income" ? INCOMES_KEY : EXPENSES_KEY;
     const value = safeParse(localStorage.getItem(key), []);
@@ -56,7 +66,7 @@
   }
 
   function normalizeTransaction(kind, input, existingId) {
-    const categoryList = kind === "income" ? incomeCategories : expenseCategories;
+    const categoryList = getCategoryList(kind);
     const date = String(input?.date || currentDate()).slice(0, 10);
     const category = categoryList.includes(String(input?.category || ""))
       ? String(input.category)
@@ -119,6 +129,47 @@
   window.VisionMoneyProDemo = {
     expenseCategories,
     incomeCategories,
+
+    getCategories(kind) {
+      return getCategoryList(kind === "income" ? "income" : "expense");
+    },
+
+    getCustomCategories(kind = null) {
+      return getArray(CUSTOM_CATEGORIES_KEY)
+        .filter(item => !kind || item.kind === kind)
+        .sort((a, b) => String(a.name).localeCompare(String(b.name), "pt-BR"));
+    },
+
+    addCategory(kind, name) {
+      const normalizedKind = kind === "income" ? "income" : "expense";
+      const value = String(name || "").trim().slice(0, 60);
+      if (!value) throw new Error("category_name_required");
+      if (getCategoryList(normalizedKind).some(item => item.toLocaleLowerCase("pt-BR") === value.toLocaleLowerCase("pt-BR"))) {
+        throw new Error("category_exists");
+      }
+      const items = getArray(CUSTOM_CATEGORIES_KEY);
+      const record = { id: newId(), kind: normalizedKind, name: value, createdAt: new Date().toISOString() };
+      items.push(record);
+      saveArray(CUSTOM_CATEGORIES_KEY, items);
+      return record;
+    },
+
+    removeCustomCategory(id) {
+      const items = getArray(CUSTOM_CATEGORIES_KEY);
+      const category = items.find(item => item.id === id);
+      if (!category) return false;
+
+      const inUse =
+        getCollection(category.kind).some(item => item.category === category.name) ||
+        (category.kind === "expense" && (
+          getArray(PAYABLES_KEY).some(item => item.category === category.name) ||
+          getArray(BUDGETS_KEY).some(item => item.category === category.name)
+        ));
+
+      if (inUse) throw new Error("category_in_use");
+      saveArray(CUSTOM_CATEGORIES_KEY, items.filter(item => item.id !== id));
+      return true;
+    },
 
     getProfile() {
       return safeParse(localStorage.getItem(PROFILE_KEY), { name: "", email: "" });
@@ -209,7 +260,7 @@
     upsertBudget(category, amount, month = currentMonth()) {
       const value = normalizeMoney(amount);
       if (!(value > 0)) throw new Error("budget_amount_required");
-      if (!expenseCategories.includes(category)) throw new Error("invalid_category");
+      if (!getCategoryList("expense").includes(category)) throw new Error("invalid_category");
 
       const budgets = getArray(BUDGETS_KEY);
       const index = budgets.findIndex(item => item.month === month && item.category === category);
@@ -233,7 +284,7 @@
     },
 
     getCategorySpend(month = currentMonth()) {
-      const totals = Object.fromEntries(expenseCategories.map(category => [category, 0]));
+      const totals = Object.fromEntries(getCategoryList("expense").map(category => [category, 0]));
       getCollection("expense")
         .filter(item => String(item.date).slice(0, 7) === month)
         .forEach(item => {
@@ -414,9 +465,10 @@
       const current = index >= 0 ? items[index] : null;
       const description = String(input?.description || "").trim().slice(0, 180);
       const amount = normalizeMoney(input?.amount);
-      const category = expenseCategories.includes(String(input?.category || ""))
+      const categories = getCategoryList("expense");
+      const category = categories.includes(String(input?.category || ""))
         ? String(input.category)
-        : expenseCategories[0];
+        : categories[0];
       const dueDate = String(input?.dueDate || currentDate()).slice(0, 10);
 
       if (!description) throw new Error("payable_description_required");
@@ -496,6 +548,95 @@
       };
     },
 
+
+    getRecurrences() {
+      return getArray(RECURRENCES_KEY).slice().sort((a, b) =>
+        Number(b.active !== false) - Number(a.active !== false) ||
+        String(a.nextDate).localeCompare(String(b.nextDate))
+      );
+    },
+
+    getRecurrence(id) {
+      return this.getRecurrences().find(item => item.id === id) || null;
+    },
+
+    upsertRecurrence(input, id = null) {
+      const items = getArray(RECURRENCES_KEY);
+      const index = id ? items.findIndex(item => item.id === id) : -1;
+      const current = index >= 0 ? items[index] : null;
+      const kind = input?.kind === "income" ? "income" : "expense";
+      const categories = getCategoryList(kind);
+      const description = String(input?.description || "").trim().slice(0, 180);
+      const amount = normalizeMoney(input?.amount);
+      const frequency = ["weekly","monthly","yearly"].includes(input?.frequency) ? input.frequency : "monthly";
+      const category = categories.includes(String(input?.category || "")) ? String(input.category) : categories[0];
+      const nextDate = String(input?.nextDate || currentDate()).slice(0, 10);
+      if (!description) throw new Error("recurrence_description_required");
+      if (!(amount > 0)) throw new Error("recurrence_amount_required");
+
+      const record = {
+        id: current?.id || newId(),
+        kind,
+        description,
+        amount,
+        category,
+        frequency,
+        nextDate,
+        active: input?.active === false ? false : true,
+        createdAt: current?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      if (index >= 0) items[index] = record;
+      else items.push(record);
+      saveArray(RECURRENCES_KEY, items);
+      return record;
+    },
+
+    removeRecurrence(id) {
+      saveArray(RECURRENCES_KEY, getArray(RECURRENCES_KEY).filter(item => item.id !== id));
+    },
+
+    toggleRecurrence(id, active) {
+      const item = this.getRecurrence(id);
+      if (!item) return null;
+      return this.upsertRecurrence({ ...item, active: Boolean(active) }, id);
+    },
+
+    generateDueRecurrences(untilDate = currentDate()) {
+      const items = getArray(RECURRENCES_KEY);
+      let generated = 0;
+      const advance = (dateString, frequency) => {
+        const [year, month, day] = String(dateString).split("-").map(Number);
+        const date = new Date(year, month - 1, day, 12);
+        if (frequency === "weekly") date.setDate(date.getDate() + 7);
+        if (frequency === "monthly") date.setMonth(date.getMonth() + 1);
+        if (frequency === "yearly") date.setFullYear(date.getFullYear() + 1);
+        return date.toISOString().slice(0, 10);
+      };
+
+      items.forEach(item => {
+        if (item.active === false) return;
+        let guard = 0;
+        while (item.nextDate <= untilDate && guard < 120) {
+          this.upsertTransaction(item.kind, {
+            description: item.description,
+            amount: item.amount,
+            date: item.nextDate,
+            category: item.category,
+            notes: "Gerado por recorrência"
+          });
+          item.nextDate = advance(item.nextDate, item.frequency);
+          item.updatedAt = new Date().toISOString();
+          generated += 1;
+          guard += 1;
+        }
+      });
+
+      saveArray(RECURRENCES_KEY, items);
+      return generated;
+    },
+
     getRecentTransactions(limit = 6) {
       const expenses = getCollection("expense").map(item => ({ ...item, kind: "expense" }));
       const incomes = getCollection("income").map(item => ({ ...item, kind: "income" }));
@@ -566,7 +707,8 @@
     reset() {
       [
         PROFILE_KEY, WORKSPACE_KEY, EXPENSES_KEY, INCOMES_KEY, BUDGETS_KEY,
-        GOALS_KEY, CONTRIBUTIONS_KEY, CARDS_KEY, PAYABLES_KEY
+        GOALS_KEY, CONTRIBUTIONS_KEY, CARDS_KEY, PAYABLES_KEY,
+        CUSTOM_CATEGORIES_KEY, RECURRENCES_KEY
       ].forEach(key => localStorage.removeItem(key));
     }
   };
