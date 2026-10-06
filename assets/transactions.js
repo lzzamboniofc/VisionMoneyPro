@@ -17,13 +17,7 @@
   const amountInput = $("transaction-amount");
   const dateInput = $("transaction-date");
   const categoryInput = $("transaction-category");
-
-  function populateCategories() {
-    const categories = isIncome ? api.incomeCategories : api.expenseCategories;
-    categoryInput.innerHTML = categories.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join("");
-    categoryFilter.innerHTML = '<option value="">Todas as categorias</option>' +
-      categories.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join("");
-  }
+  const cardInput = $("transaction-card");
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -32,6 +26,28 @@
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
+  }
+
+  function populateCategories() {
+    const categories = isIncome ? api.incomeCategories : api.expenseCategories;
+    categoryInput.innerHTML = categories
+      .map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`)
+      .join("");
+    categoryFilter.innerHTML = '<option value="">Todas as categorias</option>' +
+      categories.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join("");
+  }
+
+  function populateCards() {
+    if (!cardInput) return;
+    const cards = api.getCards(false);
+    cardInput.innerHTML = '<option value="">Sem cartão / outro meio</option>' +
+      cards.map(card => `<option value="${card.id}">${escapeHtml(card.name)}${card.lastFour ? " •••• " + escapeHtml(card.lastFour) : ""}</option>`).join("");
+    const helper = $("card-helper");
+    if (helper) {
+      helper.innerHTML = cards.length
+        ? 'Compras vinculadas aparecem automaticamente em <a href="../cartoes/">Cartões e faturas</a>.'
+        : 'Nenhum cartão ativo. <a href="../cartoes/">Cadastre um cartão</a> para vincular compras.';
+    }
   }
 
   function currentMonth() {
@@ -43,6 +59,7 @@
     transactionId.value = "";
     dateInput.value = new Date().toISOString().slice(0, 10);
     categoryInput.selectedIndex = 0;
+    if (cardInput) cardInput.value = "";
     editorTitle.textContent = isIncome ? "Nova receita" : "Novo gasto";
     submitButton.textContent = isIncome ? "Salvar receita" : "Salvar gasto";
     cancelButton.hidden = true;
@@ -57,6 +74,7 @@
     dateInput.value = item.date;
     categoryInput.value = item.category;
     $("transaction-notes").value = item.notes || "";
+    if (cardInput) cardInput.value = item.cardId || "";
     editorTitle.textContent = isIncome ? "Editar receita" : "Editar gasto";
     submitButton.textContent = "Salvar alterações";
     cancelButton.hidden = false;
@@ -77,10 +95,12 @@
     const category = categoryFilter.value;
     const month = monthFilter.value;
     return api.getTransactions(page).filter(item => {
+      const card = item.cardId ? api.getCard(item.cardId) : null;
       const matchesTerm = !term ||
         item.description.toLocaleLowerCase("pt-BR").includes(term) ||
         item.category.toLocaleLowerCase("pt-BR").includes(term) ||
-        (item.notes || "").toLocaleLowerCase("pt-BR").includes(term);
+        (item.notes || "").toLocaleLowerCase("pt-BR").includes(term) ||
+        (card?.name || "").toLocaleLowerCase("pt-BR").includes(term);
       const matchesCategory = !category || item.category === category;
       const matchesMonth = !month || item.date.slice(0, 7) === month;
       return matchesTerm && matchesCategory && matchesMonth;
@@ -99,28 +119,32 @@
     $("all-count").textContent = String(all.length);
 
     empty.hidden = items.length > 0;
-    list.innerHTML = items.map(item => `
-      <article class="transaction-row">
-        <div class="transaction-main">
-          <span class="transaction-type ${isIncome ? "income" : "expense"}">${isIncome ? "+" : "−"}</span>
-          <div>
-            <strong>${escapeHtml(item.description)}</strong>
-            <div class="transaction-meta">
-              <span>${escapeHtml(item.category)}</span>
-              <span>•</span>
-              <span>${api.formatDate(item.date)}</span>
+    list.innerHTML = items.map(item => {
+      const card = !isIncome && item.cardId ? api.getCard(item.cardId) : null;
+      return `
+        <article class="transaction-row">
+          <div class="transaction-main">
+            <span class="transaction-type ${isIncome ? "income" : "expense"}">${isIncome ? "+" : "−"}</span>
+            <div>
+              <strong>${escapeHtml(item.description)}</strong>
+              <div class="transaction-meta">
+                <span>${escapeHtml(item.category)}</span>
+                <span>•</span>
+                <span>${api.formatDate(item.date)}</span>
+                ${card ? `<span>•</span><span class="meta-card">${escapeHtml(card.name)}</span>` : ""}
+              </div>
             </div>
           </div>
-        </div>
-        <div class="transaction-value">
-          <strong>${isIncome ? "+" : "−"} ${api.formatCurrency(item.amount)}</strong>
-          <div class="row-actions">
-            <button type="button" data-action="edit" data-id="${item.id}">Editar</button>
-            <button type="button" data-action="delete" data-id="${item.id}" class="danger-action">Excluir</button>
+          <div class="transaction-value">
+            <strong>${isIncome ? "+" : "−"} ${api.formatCurrency(item.amount)}</strong>
+            <div class="row-actions">
+              <button type="button" data-action="edit" data-id="${item.id}">Editar</button>
+              <button type="button" data-action="delete" data-id="${item.id}" class="danger-action">Excluir</button>
+            </div>
           </div>
-        </div>
-      </article>
-    `).join("");
+        </article>
+      `;
+    }).join("");
   }
 
   form.addEventListener("submit", (event) => {
@@ -131,7 +155,8 @@
         amount: amountInput.value,
         date: dateInput.value,
         category: categoryInput.value,
-        notes: $("transaction-notes").value
+        notes: $("transaction-notes").value,
+        cardId: cardInput?.value || ""
       }, transactionId.value || null);
       resetEditor();
       render();
@@ -151,11 +176,13 @@
 
   $("seed-data")?.addEventListener("click", () => {
     const seeded = api.seedExampleData();
-    if (!seeded) window.alert("Já existem lançamentos nesta demonstração.");
+    if (!seeded) window.alert("Já existem dados nesta demonstração.");
+    populateCards();
     render();
   });
 
   populateCategories();
+  populateCards();
   monthFilter.value = currentMonth();
   resetEditor();
   render();
