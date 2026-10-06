@@ -81,6 +81,11 @@
     const items = filteredItems();
     empty.hidden = items.length > 0;
     const today = new Date().toISOString().slice(0, 10);
+    const accounts = api.getAccounts(false);
+    const defaultAccount = api.getDefaultAccount();
+    const accountOptions = accounts.map(account =>
+      `<option value="${account.id}">${escapeHtml(account.name)} · ${api.formatCurrency(api.getAccountBalance(account.id))}</option>`
+    ).join("");
 
     list.innerHTML = items.map(item => {
       const overdue = item.status !== "paid" && item.dueDate < today;
@@ -108,7 +113,13 @@
             <div class="row-actions payable-actions">
               ${item.status === "paid"
                 ? `<button type="button" data-reopen-payable="${item.id}">Reabrir</button>`
-                : `<button type="button" data-pay-payable="${item.id}">Marcar pago</button><button type="button" data-pay-expense="${item.id}">Pagar + lançar gasto</button>`}
+                : `
+                  <select class="payable-account-select" data-payable-account="${item.id}">
+                    ${accountOptions || '<option value="">Sem conta cadastrada</option>'}
+                  </select>
+                  <button type="button" data-pay-payable="${item.id}">Marcar pago</button>
+                  <button type="button" data-pay-expense="${item.id}" ${accountOptions ? "" : "disabled"}>Pagar + lançar gasto</button>
+                `}
               <button type="button" data-edit-payable="${item.id}">Editar</button>
               <button type="button" data-remove-payable="${item.id}" class="danger-action">Excluir</button>
             </div>
@@ -116,6 +127,10 @@
         </article>
       `;
     }).join("");
+
+    document.querySelectorAll("[data-payable-account]").forEach(select => {
+      if (defaultAccount) select.value = defaultAccount.id;
+    });
   }
 
   form.addEventListener("submit", event => {
@@ -151,7 +166,9 @@
       render();
     }
     if (payExpense) {
-      api.markPayablePaid(payExpense.dataset.payExpense, true);
+      const id = payExpense.dataset.payExpense;
+      const select = list.querySelector('[data-payable-account="' + CSS.escape(id) + '"]');
+      api.markPayablePaid(id, true, select?.value || "");
       render();
     }
     if (reopen) {
