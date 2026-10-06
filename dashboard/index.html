@@ -80,11 +80,38 @@
             <a class="btn secondary" href="../receitas/">+ Nova receita</a>
           </div>
           <div class="list">
+            <div><a href="../cartoes/">Cartões e faturas</a></div>
+            <div><a href="../contas-a-pagar/">Contas a pagar</a></div>
             <div><a href="../planejamento/">Planejamento mensal</a></div>
             <div><a href="../metas/">Metas financeiras</a></div>
-            <div>Cartões e faturas <span class="muted">· em breve</span></div>
           </div>
         </article>
+      </section>
+
+      <section class="dashboard-ops-grid">
+        <a class="panel dashboard-op-card" href="../cartoes/">
+          <div>
+            <p class="eyebrow">CARTÕES</p>
+            <h2>Faturas do mês</h2>
+            <p class="muted">Compras vinculadas aos cartões aparecem automaticamente aqui.</p>
+          </div>
+          <div class="op-value">
+            <strong id="dashboard-card-bills">R$ 0,00</strong>
+            <span id="dashboard-card-count">0 cartão(ões) ativo(s)</span>
+          </div>
+        </a>
+
+        <a class="panel dashboard-op-card" href="../contas-a-pagar/">
+          <div>
+            <p class="eyebrow">CONTAS A PAGAR</p>
+            <h2>Próximos compromissos</h2>
+            <p class="muted">Acompanhe pendências e pagamentos atrasados.</p>
+          </div>
+          <div class="op-value">
+            <strong id="dashboard-payables">R$ 0,00</strong>
+            <span id="dashboard-payables-note">0 pendente(s)</span>
+          </div>
+        </a>
       </section>
 
       <section class="panel dashboard-info-panel">
@@ -102,11 +129,12 @@
     </main>
   </div>
 
-  <nav class="mobile-nav">
+  <nav class="mobile-nav mobile-nav-five">
     <a class="active" href="./">Início</a>
     <a href="../gastos/">Gastos</a>
-    <a href="../receitas/">Receitas</a>
-    <a href="../onboarding/">Conta</a>
+    <a href="../cartoes/">Cartões</a>
+    <a href="../contas-a-pagar/">Contas</a>
+    <a href="../metas/">Metas</a>
   </nav>
 
   <script src="../assets/demo.js"></script>
@@ -155,6 +183,17 @@
         ? Math.round(((summary.incomeTotal - summary.expenseTotal) / summary.incomeTotal) * 100)
         : 0;
       document.getElementById("metric-saving").textContent = saving + "%";
+
+      const activeCards = api.getCards(false);
+      const totalBills = api.getTotalCardBills();
+      document.getElementById("dashboard-card-bills").textContent = api.formatCurrency(totalBills);
+      document.getElementById("dashboard-card-count").textContent = activeCards.length + " cartão(ões) ativo(s)";
+
+      const payableSummary = api.getPayablesSummary();
+      document.getElementById("dashboard-payables").textContent = api.formatCurrency(payableSummary.pendingTotal);
+      document.getElementById("dashboard-payables-note").textContent = payableSummary.overdueCount > 0
+        ? payableSummary.pendingCount + " pendente(s) · " + payableSummary.overdueCount + " atrasada(s)"
+        : payableSummary.pendingCount + " pendente(s)";
 
       const recent = api.getRecentTransactions(6);
       const recentList = document.getElementById("recent-list");
