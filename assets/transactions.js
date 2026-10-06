@@ -29,7 +29,7 @@
   }
 
   function populateCategories() {
-    const categories = isIncome ? api.incomeCategories : api.expenseCategories;
+    const categories = api.getCategories(isIncome ? "income" : "expense");
     categoryInput.innerHTML = categories
       .map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`)
       .join("");
