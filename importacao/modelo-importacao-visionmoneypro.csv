@@ -1,0 +1,4 @@
+﻿data;tipo;descricao;valor;categoria;conta;cartao;observacao
+01/10/2026;receita;Salário;6500,00;Salário;Conta principal;;Recebimento mensal
+02/10/2026;gasto;Supermercado;325,90;Alimentação;;Cartão principal;Compra no crédito
+03/10/2026;gasto;Internet;119,90;Moradia;Conta principal;;Pagamento via Pix
