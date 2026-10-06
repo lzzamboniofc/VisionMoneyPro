@@ -1067,6 +1067,142 @@
       return generated;
     },
 
+
+    getFinancialInsights() {
+      const insights = [];
+      const month = currentMonth();
+      const summary = this.getMonthSummary(month);
+      const previousMonth = addMonthsToMonth(month, -1);
+      const previous = this.getMonthSummary(previousMonth);
+
+      const savingRate = summary.incomeTotal > 0
+        ? Math.round(((summary.incomeTotal - summary.expenseTotal) / summary.incomeTotal) * 100)
+        : 0;
+      const previousSavingRate = previous.incomeTotal > 0
+        ? Math.round(((previous.incomeTotal - previous.expenseTotal) / previous.incomeTotal) * 100)
+        : null;
+
+      if (previousSavingRate !== null && summary.incomeTotal > 0) {
+        const delta = savingRate - previousSavingRate;
+        if (delta <= -10) {
+          insights.push({
+            id:"saving_drop", tone:"warning", icon:"↘",
+            title:"Sua taxa de economia caiu",
+            text:`Você está economizando ${Math.abs(delta)} pontos percentuais a menos que no mês anterior.`,
+            href:"../analises/"
+          });
+        } else if (delta >= 10) {
+          insights.push({
+            id:"saving_up", tone:"positive", icon:"↗",
+            title:"Sua economia melhorou",
+            text:`A taxa de economia subiu ${delta} pontos percentuais em relação ao mês anterior.`,
+            href:"../analises/"
+          });
+        }
+      }
+
+      const budgets = this.getBudgets(month);
+      const spend = this.getCategorySpend(month);
+      budgets.forEach(budget => {
+        const used = Number(spend[budget.category] || 0);
+        const percent = budget.amount > 0 ? Math.round((used / budget.amount) * 100) : 0;
+        if (percent >= 100) {
+          insights.push({
+            id:"budget_over_" + budget.id, tone:"danger", icon:"!",
+            title:`${budget.category} ultrapassou o orçamento`,
+            text:`Você já usou ${percent}% do limite de ${this.formatCurrency(budget.amount)}.`,
+            href:"../planejamento/"
+          });
+        } else if (percent >= 80) {
+          insights.push({
+            id:"budget_near_" + budget.id, tone:"warning", icon:"%",
+            title:`${budget.category} está perto do limite`,
+            text:`Já foram consumidos ${percent}% do orçamento da categoria.`,
+            href:"../planejamento/"
+          });
+        }
+      });
+
+      const payables = this.getPayables().filter(item => item.status !== "paid");
+      const today = new Date(currentDate() + "T12:00:00");
+      const inSeven = new Date(today);
+      inSeven.setDate(inSeven.getDate() + 7);
+
+      const overdue = payables.filter(item => item.dueDate < currentDate());
+      if (overdue.length) {
+        const total = overdue.reduce((sum,item)=>sum+Number(item.amount||0),0);
+        insights.push({
+          id:"payables_overdue", tone:"danger", icon:"!",
+          title:`${overdue.length} conta(s) atrasada(s)`,
+          text:`Há ${this.formatCurrency(total)} em compromissos vencidos.`,
+          href:"../contas-a-pagar/"
+        });
+      }
+
+      const upcoming = payables.filter(item => {
+        const date = new Date(item.dueDate + "T12:00:00");
+        return date >= today && date <= inSeven;
+      });
+      if (upcoming.length) {
+        const total = upcoming.reduce((sum,item)=>sum+Number(item.amount||0),0);
+        insights.push({
+          id:"payables_soon", tone:"info", icon:"7",
+          title:"Contas vencendo nos próximos 7 dias",
+          text:`${this.formatCurrency(total)} em ${upcoming.length} compromisso(s).`,
+          href:"../contas-a-pagar/"
+        });
+      }
+
+      this.getCards(false).forEach(card => {
+        const used = this.getCardUsedLimit(card.id);
+        const percent = card.limit > 0 ? Math.round((used / card.limit) * 100) : 0;
+        if (percent >= 90) {
+          insights.push({
+            id:"card_high_" + card.id, tone:"danger", icon:"▣",
+            title:`${card.name} está com ${percent}% do limite em uso`,
+            text:`Restam ${this.formatCurrency(Math.max(0, card.limit - used))} de limite disponível.`,
+            href:"../cartoes/"
+          });
+        } else if (percent >= 70) {
+          insights.push({
+            id:"card_watch_" + card.id, tone:"warning", icon:"▣",
+            title:`Atenção ao limite do ${card.name}`,
+            text:`${percent}% do limite já está comprometido.`,
+            href:"../cartoes/"
+          });
+        }
+
+        [month, addMonthsToMonth(month,-1)].forEach(billMonth => {
+          const bill = this.getCardBill(card.id, billMonth);
+          if (bill.total > 0 && bill.status === "overdue") {
+            insights.push({
+              id:"bill_overdue_" + card.id + "_" + billMonth, tone:"danger", icon:"!",
+              title:`Fatura atrasada: ${card.name}`,
+              text:`${this.formatCurrency(bill.total)} venceu em ${this.formatDate(bill.dueDate)}.`,
+              href:"../cartoes/"
+            });
+          }
+        });
+      });
+
+      this.getAccounts(false).forEach(account => {
+        const balance = this.getAccountBalance(account.id);
+        if (balance < 0) {
+          insights.push({
+            id:"negative_account_" + account.id, tone:"danger", icon:"−",
+            title:`${account.name} está com saldo negativo`,
+            text:`Saldo atual: ${this.formatCurrency(balance)}.`,
+            href:"../contas/"
+          });
+        }
+      });
+
+      const toneOrder = { danger:0, warning:1, info:2, positive:3 };
+      return insights
+        .sort((a,b)=>(toneOrder[a.tone] ?? 9)-(toneOrder[b.tone] ?? 9))
+        .slice(0, 8);
+    },
+
     getRecentTransactions(limit = 6) {
       const expenses = getCollection("expense").map(item => ({ ...item, kind: "expense" }));
       const incomes = getCollection("income").map(item => ({ ...item, kind: "income" }));
