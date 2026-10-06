@@ -96,7 +96,8 @@ create table if not exists public.categories (
   created_by uuid not null references auth.users(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  unique (workspace_id, name, kind)
+  unique (workspace_id, name, kind),
+  unique (workspace_id, id)
 );
 
 create table if not exists public.credit_cards (
@@ -111,7 +112,8 @@ create table if not exists public.credit_cards (
   is_active boolean not null default true,
   created_by uuid not null references auth.users(id),
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  unique (workspace_id, id)
 );
 
 -- ---------------------------------------------------------------------------
@@ -121,8 +123,8 @@ create table if not exists public.credit_cards (
 create table if not exists public.expenses (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.workspaces(id) on delete cascade,
-  category_id uuid references public.categories(id) on delete set null,
-  credit_card_id uuid references public.credit_cards(id) on delete set null,
+  category_id uuid,
+  credit_card_id uuid,
   description text not null check (char_length(trim(description)) between 1 and 180),
   amount numeric(14,2) not null check (amount > 0),
   expense_date date not null default current_date,
@@ -134,13 +136,17 @@ create table if not exists public.expenses (
   created_by uuid not null references auth.users(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  check (installment_number is null or installment_number <= installments)
+  check (installment_number is null or installment_number <= installments),
+  foreign key (workspace_id, category_id)
+    references public.categories(workspace_id, id) on delete set null,
+  foreign key (workspace_id, credit_card_id)
+    references public.credit_cards(workspace_id, id) on delete set null
 );
 
 create table if not exists public.incomes (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.workspaces(id) on delete cascade,
-  category_id uuid references public.categories(id) on delete set null,
+  category_id uuid,
   description text not null check (char_length(trim(description)) between 1 and 180),
   amount numeric(14,2) not null check (amount > 0),
   income_date date not null default current_date,
@@ -149,13 +155,15 @@ create table if not exists public.incomes (
   notes text,
   created_by uuid not null references auth.users(id),
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  foreign key (workspace_id, category_id)
+    references public.categories(workspace_id, id) on delete set null
 );
 
 create table if not exists public.payables (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.workspaces(id) on delete cascade,
-  category_id uuid references public.categories(id) on delete set null,
+  category_id uuid,
   description text not null check (char_length(trim(description)) between 1 and 180),
   amount numeric(14,2) not null check (amount > 0),
   due_date date not null,
@@ -164,19 +172,23 @@ create table if not exists public.payables (
   notes text,
   created_by uuid not null references auth.users(id),
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  foreign key (workspace_id, category_id)
+    references public.categories(workspace_id, id) on delete set null
 );
 
 create table if not exists public.category_budgets (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.workspaces(id) on delete cascade,
-  category_id uuid not null references public.categories(id) on delete cascade,
+  category_id uuid not null,
   month date not null check (month = date_trunc('month', month)::date),
   limit_amount numeric(14,2) not null check (limit_amount > 0),
   created_by uuid not null references auth.users(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  unique (workspace_id, category_id, month)
+  unique (workspace_id, category_id, month),
+  foreign key (workspace_id, category_id)
+    references public.categories(workspace_id, id) on delete cascade
 );
 
 create table if not exists public.goals (
@@ -189,24 +201,27 @@ create table if not exists public.goals (
   completed_at timestamptz,
   created_by uuid not null references auth.users(id),
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  unique (workspace_id, id)
 );
 
 create table if not exists public.goal_contributions (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.workspaces(id) on delete cascade,
-  goal_id uuid not null references public.goals(id) on delete cascade,
+  goal_id uuid not null,
   amount numeric(14,2) not null check (amount > 0),
   contributed_at date not null default current_date,
   notes text,
   created_by uuid not null references auth.users(id),
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  foreign key (workspace_id, goal_id)
+    references public.goals(workspace_id, id) on delete cascade
 );
 
 create table if not exists public.recurring_transactions (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.workspaces(id) on delete cascade,
-  category_id uuid references public.categories(id) on delete set null,
+  category_id uuid,
   direction public.category_kind not null check (direction in ('expense', 'income')),
   description text not null check (char_length(trim(description)) between 1 and 180),
   amount numeric(14,2) not null check (amount > 0),
@@ -217,7 +232,9 @@ create table if not exists public.recurring_transactions (
   created_by uuid not null references auth.users(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  check (ends_on is null or ends_on >= next_date)
+  check (ends_on is null or ends_on >= next_date),
+  foreign key (workspace_id, category_id)
+    references public.categories(workspace_id, id) on delete set null
 );
 
 -- ---------------------------------------------------------------------------
@@ -391,6 +408,44 @@ grant usage on schema private to authenticated;
 grant execute on function private.is_workspace_member(uuid) to authenticated;
 grant execute on function private.has_workspace_role(uuid, public.workspace_role[]) to authenticated;
 grant execute on function private.can_view_profile(uuid) to authenticated;
+
+create or replace function private.prevent_last_workspace_owner()
+returns trigger
+language plpgsql
+security invoker
+set search_path = ''
+as $
+begin
+  if old.role = 'owner'
+     and (
+       tg_op = 'DELETE'
+       or (tg_op = 'UPDATE' and new.role <> 'owner')
+     )
+     and not exists (
+       select 1
+       from public.workspace_members wm
+       where wm.workspace_id = old.workspace_id
+         and wm.user_id <> old.user_id
+         and wm.role = 'owner'
+     )
+  then
+    raise exception 'workspace_requires_owner';
+  end if;
+
+  if tg_op = 'DELETE' then
+    return old;
+  end if;
+
+  return new;
+end;
+$;
+
+revoke all on function private.prevent_last_workspace_owner() from public;
+
+drop trigger if exists workspace_members_keep_owner on public.workspace_members;
+create trigger workspace_members_keep_owner
+before update of role or delete on public.workspace_members
+for each row execute function private.prevent_last_workspace_owner();
 
 -- ---------------------------------------------------------------------------
 -- Updated-at triggers
@@ -794,7 +849,7 @@ grant select, insert, update, delete on public.goal_contributions to authenticat
 grant select, insert, update, delete on public.recurring_transactions to authenticated;
 
 -- Private tables are server-side only.
-revoke all on schema private from anon;
+revoke all on schema private from anon, authenticated, public;
 revoke all on all tables in schema private from anon, authenticated, public;
 revoke all on all sequences in schema private from anon, authenticated, public;
 
