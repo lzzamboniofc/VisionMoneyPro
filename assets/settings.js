@@ -116,7 +116,8 @@
   document.getElementById("clear-finance-data").addEventListener("click", () => {
     const keys = [
       "vmp_demo_expenses","vmp_demo_incomes","vmp_demo_budgets",
-      "vmp_demo_goals","vmp_demo_goal_contributions","vmp_demo_cards","vmp_demo_payables"
+      "vmp_demo_goals","vmp_demo_goal_contributions","vmp_demo_cards","vmp_demo_payables",
+      "vmp_demo_custom_categories","vmp_demo_recurrences"
     ];
     if (!window.confirm("Apagar todos os lançamentos, cartões, contas, orçamentos e metas desta demonstração?")) return;
     keys.forEach(key => localStorage.removeItem(key));
