@@ -161,6 +161,7 @@
 
       const inUse =
         getCollection(category.kind).some(item => item.category === category.name) ||
+        getArray(RECURRENCES_KEY).some(item => item.kind === category.kind && item.category === category.name) ||
         (category.kind === "expense" && (
           getArray(PAYABLES_KEY).some(item => item.category === category.name) ||
           getArray(BUDGETS_KEY).some(item => item.category === category.name)
@@ -608,11 +609,23 @@
       let generated = 0;
       const advance = (dateString, frequency) => {
         const [year, month, day] = String(dateString).split("-").map(Number);
-        const date = new Date(year, month - 1, day, 12);
-        if (frequency === "weekly") date.setDate(date.getDate() + 7);
-        if (frequency === "monthly") date.setMonth(date.getMonth() + 1);
-        if (frequency === "yearly") date.setFullYear(date.getFullYear() + 1);
-        return date.toISOString().slice(0, 10);
+        if (frequency === "weekly") {
+          const date = new Date(year, month - 1, day, 12);
+          date.setDate(date.getDate() + 7);
+          return date.toISOString().slice(0, 10);
+        }
+
+        if (frequency === "monthly") {
+          const target = new Date(year, month, 1, 12);
+          const last = lastDayOfMonth(target.getFullYear(), target.getMonth());
+          target.setDate(Math.min(day, last));
+          return target.toISOString().slice(0, 10);
+        }
+
+        const targetYear = year + 1;
+        const last = lastDayOfMonth(targetYear, month - 1);
+        const target = new Date(targetYear, month - 1, Math.min(day, last), 12);
+        return target.toISOString().slice(0, 10);
       };
 
       items.forEach(item => {
