@@ -1,27 +1,38 @@
 # VisionMoneyPro — Painel Administrativo
 
-> Estado atual: frontend implementado com dados simulados. Nenhum dado foi lido ou gravado no Supabase.
+> Estado atual: frontend implementado com dados simulados/localStorage. Nenhum dado foi lido ou gravado no Supabase.
 
 ## Objetivo
 
-O Admin é a área operacional do produto VisionMoneyPro. Ele é separado da experiência financeira dos clientes.
+O Admin é a área operacional do VisionMoneyPro e fica separado da experiência financeira dos clientes.
 
-O objetivo principal é permitir administrar:
+Ele foi preparado para administrar:
 
 - usuários;
 - workspaces;
 - membros;
 - planos;
+- assinatura;
 - status de acesso;
-- assinaturas;
-- atividade de produto;
-- auditoria e suporte.
+- atividade do produto;
+- auditoria;
+- suporte operacional.
+
+## Acesso atual
+
+A rota `/admin/` exige uma sessão administrativa local de demonstração.
+
+A tela `/admin/login/` existe somente para validar a experiência do Admin em GitHub Pages.
+
+Como GitHub Pages é hospedagem estática, **essa barreira não é segurança real**. As credenciais de demonstração existem no próprio frontend e qualquer pessoa com acesso ao código pode encontrá-las.
+
+Quando o backend estiver ativo, o acesso deverá ser substituído por autenticação real + autorização administrativa validada no servidor.
 
 ## Princípio de privacidade
 
-A operação normal do Admin **não precisa carregar conteúdo financeiro do cliente**.
+A operação normal do Admin não precisa carregar conteúdo financeiro do cliente.
 
-Por padrão, o Admin não deve consultar:
+Por padrão, o painel não consulta nem exibe:
 
 - gastos;
 - receitas;
@@ -31,46 +42,46 @@ Por padrão, o Admin não deve consultar:
 - metas;
 - valores financeiros privados.
 
-Isso reduz a superfície de acesso administrativo e mantém o suporte focado em metadados operacionais.
+O Admin trabalha com metadados operacionais.
 
-## Visão geral implementada
+## Visão geral
 
-A tela atual de `/admin/` possui:
+A tela de visão geral mostra:
 
-- total de usuários;
-- total de workspaces;
-- MRR e conversão simulados;
-- gráfico de crescimento;
-- distribuição por plano;
+- usuários cadastrados;
+- workspaces ativos;
+- MRR estimado;
+- conversão para planos pagos;
+- crescimento de cadastros;
+- distribuição dos planos;
 - saúde da base;
+- pagamentos pendentes;
 - eventos recentes.
 
 ## Clientes
 
-A área de clientes permite:
+A área de clientes possui:
 
-- buscar nome/e-mail/workspace;
-- filtrar status;
-- filtrar plano;
-- abrir detalhe lateral;
-- simular ativação/suspensão;
-- simular troca de plano;
-- simular reenvio de confirmação.
+- busca por nome, e-mail ou workspace;
+- filtro por status;
+- filtro por plano;
+- paginação;
+- detalhe lateral do cliente;
+- ativação/suspensão simulada;
+- alteração de plano;
+- reenvio simulado de confirmação.
 
-As ações são persistidas apenas no `localStorage` do navegador e geram eventos de auditoria simulados.
+## Assinaturas
 
-## Workspaces
+Cada workspace pode simular os seguintes estados:
 
-A área de workspaces mostra:
+- ativa;
+- em teste;
+- pagamento pendente;
+- cancelada;
+- não se aplica (Free).
 
-- owner;
-- tipo individual/compartilhado;
-- quantidade de membros;
-- plano;
-- status;
-- data de criação.
-
-## Planos
+Somente assinaturas ativas/em teste entram no MRR demonstrativo.
 
 Os preços atuais são apenas valores de demonstração:
 
@@ -78,18 +89,49 @@ Os preços atuais são apenas valores de demonstração:
 - Plus: R$ 19,90;
 - Family: R$ 29,90.
 
-Esses valores não representam decisão comercial final.
+Nenhum preço comercial definitivo foi decidido.
 
-## Atividade / auditoria
+## Suporte
 
-A área de atividade foi preparada para receber eventos como:
+O drawer do cliente possui notas operacionais de suporte.
+
+Essas notas devem tratar somente de temas como:
+
+- acesso;
+- cadastro;
+- workspace;
+- membros;
+- cobrança;
+- plano;
+- problemas de produto.
+
+Elas não devem ser usadas para copiar ou registrar dados financeiros privados do cliente.
+
+## Workspaces
+
+A área de workspaces mostra:
+
+- owner;
+- tipo individual/compartilhado;
+- membros;
+- plano;
+- status de assinatura;
+- status da conta;
+- paginação.
+
+## Atividade e auditoria
+
+A área de atividade registra eventos simulados como:
 
 - cadastro;
-- criação/alteração de workspace;
-- mudança de plano;
-- alterações administrativas;
 - acesso;
-- convites e membros.
+- workspace;
+- mudança de plano;
+- mudança de assinatura;
+- ações administrativas;
+- notas de suporte.
+
+A lista possui filtros e paginação.
 
 ## Backend futuro
 
@@ -105,13 +147,13 @@ Modelo previsto:
 - `private.admin_users` → autorização administrativa;
 - `private.audit_events` → auditoria.
 
-O navegador do Admin **não deve receber uma service_role/secret key**.
+O navegador do Admin nunca deve receber uma `service_role` / secret key.
 
 ## Autorização
 
-O acesso a `/admin` deverá exigir uma função administrativa confiável no backend.
+A autorização administrativa real deverá ser validada em backend confiável.
 
-Nunca usar `user_metadata` editável pelo próprio usuário para conceder permissão de Admin.
+Não usar `user_metadata` editável pelo próprio usuário para conceder acesso administrativo.
 
 ## Próxima integração
 
@@ -119,8 +161,10 @@ Quando o banco for ativado:
 
 1. autenticar o operador;
 2. validar a função administrativa no servidor;
-3. trocar os mocks pelos dados reais;
-4. ligar as ações de status/plano;
-5. registrar cada ação em auditoria;
-6. adicionar paginação e métricas reais;
-7. conectar cobrança depois da definição comercial.
+3. trocar mocks pelos usuários/workspaces reais;
+4. paginar consultas no banco;
+5. conectar status/plano/assinatura;
+6. registrar cada ação administrativa em auditoria;
+7. persistir notas de suporte de forma privada;
+8. integrar o provedor de cobrança;
+9. adicionar permissões específicas para owner/admin/support.
