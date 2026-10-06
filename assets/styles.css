@@ -408,3 +408,49 @@ h1,h2,h3,strong{letter-spacing:-.018em}
   .member-state{grid-column:2;text-align:left}
   .member-state .row-actions{justify-content:flex-start}
 }
+
+/* Income-based monthly planning */
+.income-planning-panel{margin-bottom:14px}
+.income-planning-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,.7fr);gap:22px;align-items:end}
+.income-planning-head h2{margin:.4rem 0}
+.income-planning-head .muted{margin:.45rem 0 0}
+.income-planning-form{display:grid;gap:10px}
+.income-planning-form>label{display:grid;gap:6px;color:#cbd2e0;font-size:.78rem;font-weight:750}
+.money-input-wrap{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;min-height:46px;border:1px solid var(--border);border-radius:13px;background:rgba(2,6,15,.58);overflow:hidden}
+.money-input-wrap>span{padding:0 12px;color:#9aa6bb;font-size:.8rem;font-weight:850;border-right:1px solid var(--border)}
+.money-input-wrap input{width:100%;min-height:44px;padding:10px 12px;border:0;outline:0;color:#fff;background:transparent}
+.money-input-wrap:focus-within{border-color:#7c5cff;box-shadow:0 0 0 3px rgba(124,92,255,.12)}
+.income-planning-actions{display:flex;gap:8px;flex-wrap:wrap}
+.allocation-overview{margin-top:20px;padding:16px;border:1px solid var(--border);border-radius:16px;background:linear-gradient(145deg,rgba(124,92,255,.055),rgba(255,255,255,.018))}
+.allocation-overview-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px}
+.allocation-overview-head>div:first-child{display:flex;align-items:baseline;gap:9px}
+.allocation-overview-head span{color:var(--muted);font-size:.74rem}
+.allocation-overview-head strong{font-size:1.18rem;color:#eeeaff}
+.allocation-track{height:12px;margin:11px 0 8px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.18)}
+.allocation-track>span{display:block;height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,#5c49c7,#9c89ff);transition:width .25s ease}
+.allocation-foot{display:flex;align-items:center;justify-content:space-between;gap:14px;color:#8792a9;font-size:.7rem}
+.planning-warning{margin-top:13px;padding:11px 13px;border-radius:12px;font-size:.77rem;line-height:1.5}
+.planning-warning.info{color:#c7d2fe;background:rgba(101,153,255,.08);border:1px solid rgba(101,153,255,.16)}
+.planning-warning.warning{color:#fde6aa;background:rgba(245,190,78,.08);border:1px solid rgba(245,190,78,.18)}
+.planning-warning.error{color:#fecdd3;background:rgba(251,113,133,.08);border:1px solid rgba(251,113,133,.2)}
+.planning-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}
+.budget-progress-labels{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;color:#7f8ba2;font-size:.68rem}
+.budget-progress-labels strong{color:#bfc6d6}
+.budget-usage-track{margin-top:5px}
+.budget-usage-track.over-limit span{background:linear-gradient(90deg,#d55369,#fb7185)}
+.budget-allocation-row{display:flex;justify-content:flex-end;margin:-3px 0 9px;color:#7e899f;font-size:.67rem}
+.budget-allocation-row b{color:#bdb4ff}
+.budget-actions input:disabled,.budget-actions button:disabled{opacity:.45;cursor:not-allowed}
+.header-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+@media(max-width:1050px){
+  .income-planning-head{grid-template-columns:1fr}
+  .planning-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:680px){
+  .planning-metrics{grid-template-columns:1fr}
+  .income-planning-actions{display:grid;grid-template-columns:1fr}
+  .allocation-overview-head,.allocation-foot{align-items:flex-start;flex-direction:column}
+  .budget-allocation-row{justify-content:flex-start}
+  .header-actions{width:100%}
+  .header-actions .month-picker,.header-actions .btn{width:100%}
+}
