@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Recorrências · VisionMoneyPro</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <div class="dash-shell">
+    <aside class="sidebar">
+      <a class="brand" href="../"><span class="brand-mark">V</span><strong>VisionMoneyPro</strong></a>
+      <nav>
+        <a href="../dashboard/">Visão geral</a>
+        <a class="active" href="../movimentacoes/">Movimentações</a>
+        <a href="../planejamento/">Planejamento</a>
+        <a href="../analises/">Análises</a>
+        <a href="../configuracoes/">Configurações</a>
+      </nav>
+    </aside>
+    <main class="dash-main">
+      <header class="dash-head">
+        <div><p class="eyebrow">AUTOMAÇÃO</p><h1>Recorrências</h1><p class="muted dashboard-subtitle">Prepare lançamentos que se repetem e gere os vencidos com um clique.</p></div>
+        <button class="btn secondary" id="generate-recurrences" type="button">Gerar pendentes até hoje</button>
+      </header>
+
+      <div id="recurrence-status" class="notice recurrence-notice" hidden></div>
+
+      <section class="metric-grid recurrence-metrics">
+        <article class="metric accent"><span>Recorrências ativas</span><strong id="recurrence-active-count">0</strong><small>Regras em funcionamento</small></article>
+        <article class="metric"><span>Despesas recorrentes</span><strong id="recurrence-expense-total">R$ 0,00</strong><small>Valor por ocorrência</small></article>
+        <article class="metric income-metric"><span>Receitas recorrentes</span><strong id="recurrence-income-total">R$ 0,00</strong><small>Valor por ocorrência</small></article>
+      </section>
+
+      <section class="recurrence-layout">
+        <article class="panel recurrence-editor">
+          <p class="eyebrow">REGRA</p><h2 id="recurrence-editor-title">Nova recorrência</h2>
+          <form id="recurrence-form" class="transaction-form">
+            <input type="hidden" id="recurrence-id">
+            <label>Tipo
+              <select id="recurrence-kind"><option value="expense">Despesa</option><option value="income">Receita</option></select>
+            </label>
+            <label>Frequência
+              <select id="recurrence-frequency"><option value="weekly">Semanal</option><option value="monthly" selected>Mensal</option><option value="yearly">Anual</option></select>
+            </label>
+            <label class="field-wide">Descrição
+              <input id="recurrence-description" maxlength="180" placeholder="Ex.: Aluguel, salário, academia" required>
+            </label>
+            <label>Valor
+              <input id="recurrence-amount" type="number" min="0.01" step="0.01" placeholder="0,00" required>
+            </label>
+            <label>Próxima data
+              <input id="recurrence-next-date" type="date" required>
+            </label>
+            <label class="field-wide">Categoria
+              <select id="recurrence-category"></select>
+            </label>
+            <div class="form-actions field-wide">
+              <button class="btn primary" id="save-recurrence" type="submit">Salvar recorrência</button>
+              <button class="btn ghost" id="cancel-recurrence-edit" type="button" hidden>Cancelar edição</button>
+            </div>
+          </form>
+          <p class="muted recurrence-help">Nesta fase local, as regras não rodam sozinhas em segundo plano. O botão “Gerar pendentes” materializa os lançamentos vencidos. No backend real isso poderá ser automatizado.</p>
+        </article>
+
+        <section>
+          <div id="recurrence-empty" class="empty-state" hidden><strong>Nenhuma recorrência criada.</strong><span>Crie uma regra para aluguel, salário, assinatura ou outro lançamento repetitivo.</span></div>
+          <div id="recurrence-list" class="recurrence-list"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+  <nav class="mobile-nav compact-mobile-nav">
+    <a href="../dashboard/"><span>⌂</span>Início</a>
+    <a class="active" href="../movimentacoes/"><span>↕</span>Movimentos</a>
+    <a href="../planejamento/"><span>◫</span>Planejar</a>
+    <a href="../analises/"><span>⌁</span>Análises</a>
+    <a href="../configuracoes/"><span>⚙</span>Ajustes</a>
+  </nav>
+  <script src="../assets/demo.js"></script>
+  <script src="../assets/recurrences.js"></script>
+</body>
+</html>
