@@ -18,6 +18,9 @@
   const dateInput = $("transaction-date");
   const categoryInput = $("transaction-category");
   const cardInput = $("transaction-card");
+  const accountInput = $("transaction-account");
+  const installmentsInput = $("transaction-installments");
+  const installmentsField = $("installments-field");
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -37,6 +40,33 @@
       categories.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join("");
   }
 
+  function populateAccounts(selected = "") {
+    if (!accountInput) return;
+    const accounts = api.getAccounts(false);
+    const defaultAccount = api.getDefaultAccount();
+    accountInput.innerHTML = accounts.length
+      ? accounts.map(account => `<option value="${account.id}">${escapeHtml(account.name)} · ${api.formatCurrency(api.getAccountBalance(account.id))}</option>`).join("")
+      : '<option value="">Nenhuma conta cadastrada</option>';
+
+    const target = selected || defaultAccount?.id || "";
+    if (target && accounts.some(account => account.id === target)) accountInput.value = target;
+
+    const helper = $("account-helper");
+    if (helper) {
+      helper.innerHTML = accounts.length
+        ? 'O saldo desta conta será atualizado automaticamente. <a href="../contas/">Gerenciar contas</a>.'
+        : 'Cadastre uma conta em <a href="../contas/">Contas e carteiras</a> para acompanhar o saldo.';
+    }
+  }
+
+  function syncPaymentFields() {
+    if (isIncome) return;
+    const usingCard = Boolean(cardInput?.value);
+    if (accountInput) accountInput.disabled = usingCard;
+    if (installmentsField) installmentsField.hidden = !usingCard;
+    if (installmentsInput && !usingCard) installmentsInput.value = "1";
+  }
+
   function populateCards() {
     if (!cardInput) return;
     const cards = api.getCards(false);
@@ -45,7 +75,7 @@
     const helper = $("card-helper");
     if (helper) {
       helper.innerHTML = cards.length
-        ? 'Compras vinculadas aparecem automaticamente em <a href="../cartoes/">Cartões e faturas</a>.'
+        ? 'Compras no cartão entram na fatura e só reduzem o saldo da conta quando a fatura for paga.'
         : 'Nenhum cartão ativo. <a href="../cartoes/">Cadastre um cartão</a> para vincular compras.';
     }
   }
@@ -60,6 +90,9 @@
     dateInput.value = new Date().toISOString().slice(0, 10);
     categoryInput.selectedIndex = 0;
     if (cardInput) cardInput.value = "";
+    if (installmentsInput) installmentsInput.value = "1";
+    populateAccounts();
+    syncPaymentFields();
     editorTitle.textContent = isIncome ? "Nova receita" : "Novo gasto";
     submitButton.textContent = isIncome ? "Salvar receita" : "Salvar gasto";
     cancelButton.hidden = true;
@@ -75,6 +108,9 @@
     categoryInput.value = item.category;
     $("transaction-notes").value = item.notes || "";
     if (cardInput) cardInput.value = item.cardId || "";
+    populateAccounts(item.accountId || "");
+    if (installmentsInput) installmentsInput.value = "1";
+    syncPaymentFields();
     editorTitle.textContent = isIncome ? "Editar receita" : "Editar gasto";
     submitButton.textContent = "Salvar alterações";
     cancelButton.hidden = false;
@@ -121,6 +157,10 @@
     empty.hidden = items.length > 0;
     list.innerHTML = items.map(item => {
       const card = !isIncome && item.cardId ? api.getCard(item.cardId) : null;
+      const account = item.accountId ? api.getAccount(item.accountId) : null;
+      const installmentLabel = item.installments && item.installmentNumber
+        ? `Parcela ${item.installmentNumber}/${item.installments}`
+        : "";
       return `
         <article class="transaction-row">
           <div class="transaction-main">
@@ -132,6 +172,8 @@
                 <span>•</span>
                 <span>${api.formatDate(item.date)}</span>
                 ${card ? `<span>•</span><span class="meta-card">${escapeHtml(card.name)}</span>` : ""}
+                ${account ? `<span>•</span><span>${escapeHtml(account.name)}</span>` : ""}
+                ${installmentLabel ? `<span>•</span><span>${installmentLabel}</span>` : ""}
               </div>
             </div>
           </div>
@@ -150,14 +192,23 @@
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     try {
-      api.upsertTransaction(page, {
+      const payload = {
         description: $("transaction-description").value,
         amount: amountInput.value,
         date: dateInput.value,
         category: categoryInput.value,
         notes: $("transaction-notes").value,
-        cardId: cardInput?.value || ""
-      }, transactionId.value || null);
+        cardId: cardInput?.value || "",
+        accountId: accountInput?.value || ""
+      };
+
+      const installments = Number(installmentsInput?.value || 1);
+      if (!isIncome && !transactionId.value && payload.cardId && installments > 1) {
+        api.createInstallmentPurchase({ ...payload, installments });
+      } else {
+        api.upsertTransaction(page, payload, transactionId.value || null);
+      }
+
       resetEditor();
       render();
     } catch {
@@ -166,6 +217,7 @@
   });
 
   cancelButton.addEventListener("click", resetEditor);
+  cardInput?.addEventListener("change", syncPaymentFields);
   [search, categoryFilter, monthFilter].forEach(element => element.addEventListener("input", render));
   list.addEventListener("click", (event) => {
     const button = event.target.closest("button[data-action]");
@@ -178,11 +230,13 @@
     const seeded = api.seedExampleData();
     if (!seeded) window.alert("Já existem dados nesta demonstração.");
     populateCards();
+    populateAccounts();
     render();
   });
 
   populateCategories();
   populateCards();
+  populateAccounts();
   monthFilter.value = currentMonth();
   resetEditor();
   render();
