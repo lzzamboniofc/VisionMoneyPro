@@ -264,6 +264,14 @@
       const value = normalizeMoney(amount);
       if (!(value > 0)) throw new Error("planning_income_required");
 
+      const allocated = this.getBudgets(month)
+        .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+      if (value + 0.001 < allocated) {
+        const error = new Error("planning_income_below_allocated");
+        error.allocated = Math.round(allocated * 100) / 100;
+        throw error;
+      }
+
       const items = getArray(PLANNING_INCOME_KEY);
       const index = items.findIndex(item => item.month === month);
       const record = {
