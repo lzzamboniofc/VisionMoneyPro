@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Metas · VisionMoneyPro</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <div class="dash-shell">
+    <aside class="sidebar">
+      <a class="brand" href="../"><span class="brand-mark">V</span><strong>VisionMoneyPro</strong></a>
+      <nav>
+        <a href="../dashboard/">Visão geral</a>
+        <a href="../gastos/">Gastos</a>
+        <a href="../receitas/">Receitas</a>
+        <a href="../planejamento/">Planejamento</a>
+        <a class="active" href="./">Metas</a>
+        <a href="../onboarding/">Configurar espaço</a>
+      </nav>
+    </aside>
+
+    <main class="dash-main">
+      <header class="dash-head">
+        <div>
+          <p class="eyebrow">OBJETIVOS</p>
+          <h1>Metas financeiras</h1>
+          <p class="muted dashboard-subtitle">Crie objetivos e acompanhe o progresso dos aportes.</p>
+        </div>
+        <a class="btn ghost" href="../dashboard/">Voltar ao dashboard</a>
+      </header>
+
+      <section class="metric-grid goals-metrics">
+        <article class="metric accent"><span>Metas ativas</span><strong id="goal-count">0</strong><small>Objetivos em andamento</small></article>
+        <article class="metric"><span>Objetivo total</span><strong id="goal-total-target">R$ 0,00</strong><small>Soma das metas ativas</small></article>
+        <article class="metric income-metric"><span>Já acumulado</span><strong id="goal-total-saved">R$ 0,00</strong><small>Aportes registrados</small></article>
+      </section>
+
+      <section class="goals-layout">
+        <article class="panel goal-editor">
+          <p class="eyebrow">META</p>
+          <h2 id="goal-editor-title">Nova meta</h2>
+          <form id="goal-form" class="transaction-form goal-form">
+            <input type="hidden" id="goal-id">
+            <label class="field-wide">Nome
+              <input id="goal-name" maxlength="100" placeholder="Ex.: Reserva de emergência" required>
+            </label>
+            <label>Valor alvo
+              <input id="goal-target" type="number" min="0.01" step="0.01" placeholder="0,00" required>
+            </label>
+            <label>Prazo
+              <input id="goal-date" type="date">
+            </label>
+            <div class="form-actions field-wide">
+              <button class="btn primary" id="save-goal" type="submit">Salvar meta</button>
+              <button class="btn ghost" id="cancel-goal-edit" type="button" hidden>Cancelar edição</button>
+            </div>
+          </form>
+        </article>
+
+        <section>
+          <div class="empty-state" id="goal-empty" hidden>
+            <strong>Nenhuma meta criada.</strong>
+            <span>Crie seu primeiro objetivo financeiro.</span>
+          </div>
+          <div class="goal-list" id="goal-list"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <nav class="mobile-nav">
+    <a href="../dashboard/">Início</a>
+    <a href="../gastos/">Gastos</a>
+    <a href="../planejamento/">Planejar</a>
+    <a class="active" href="./">Metas</a>
+  </nav>
+
+  <script src="../assets/demo.js"></script>
+  <script src="../assets/goals.js"></script>
+</body>
+</html>
