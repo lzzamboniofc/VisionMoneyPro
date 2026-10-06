@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Importar extrato · VisionMoneyPro</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <div class="dash-shell">
+    <aside class="sidebar">
+      <a class="brand" href="../"><span class="brand-mark">V</span><strong>VisionMoneyPro</strong></a>
+      <nav>
+        <a href="../dashboard/">Visão geral</a>
+        <a class="active" href="../movimentacoes/">Movimentações</a>
+        <a href="../planejamento/">Planejamento</a>
+        <a href="../analises/">Análises</a>
+        <a href="../configuracoes/">Configurações</a>
+      </nav>
+    </aside>
+
+    <main class="dash-main">
+      <header class="dash-head">
+        <div>
+          <p class="eyebrow">IMPORTAÇÃO</p>
+          <h1>Importar extrato</h1>
+          <p class="muted dashboard-subtitle">Traga movimentações em CSV ou OFX, revise a prévia e só depois confirme.</p>
+        </div>
+        <a class="btn ghost" href="../movimentacoes/">Voltar a Movimentações</a>
+      </header>
+
+      <div id="import-message" class="notice import-message" hidden></div>
+
+      <section class="import-top-grid">
+        <article class="panel import-upload-panel">
+          <div class="section-head">
+            <div><p class="eyebrow">ARQUIVO</p><h2>Selecione seu extrato</h2></div>
+            <span class="pill">CSV / OFX</span>
+          </div>
+
+          <label class="import-dropzone" id="import-dropzone" for="import-file">
+            <span class="import-drop-icon">⇧</span>
+            <strong>Arraste o arquivo aqui</strong>
+            <span>ou clique para selecionar um CSV, OFX ou QFX</span>
+            <small>O arquivo é processado localmente nesta demonstração.</small>
+            <input id="import-file" type="file" accept=".csv,.ofx,.qfx,.txt,text/csv,application/x-ofx">
+          </label>
+
+          <div class="import-options">
+            <label>Conta padrão para linhas sem conta
+              <select id="import-default-account"></select>
+              <small class="field-helper">O nome informado na planilha tem prioridade. <a href="../contas/">Gerenciar contas</a>.</small>
+            </label>
+          </div>
+
+          <div class="import-file-summary" id="import-file-summary" hidden>
+            <div><span>Arquivo</span><strong id="import-file-name">—</strong></div>
+            <div><span>Formato</span><strong id="import-file-format">—</strong></div>
+            <button class="text-action danger-action" id="clear-import-file" type="button">Remover arquivo</button>
+          </div>
+        </article>
+
+        <article class="panel import-template-panel">
+          <p class="eyebrow">MODELO</p>
+          <h2>Prefere organizar antes?</h2>
+          <p class="muted">Use a planilha modelo com as colunas que o VisionMoneyPro entende. O Excel contém exemplos e uma aba com instruções.</p>
+
+          <div class="import-template-actions">
+            <a class="btn primary" href="./modelo-importacao-visionmoneypro.xlsx" download>Baixar planilha modelo (.xlsx)</a>
+            <a class="btn ghost" href="./modelo-importacao-visionmoneypro.csv" download>Baixar modelo CSV</a>
+          </div>
+
+          <div class="import-template-note">
+            <strong>Colunas do modelo</strong>
+            <span>data · tipo · descricao · valor · categoria · conta · cartao · observacao</span>
+            <small>Na versão Excel, preencha a aba <b>Importacao</b> e depois exporte essa aba como CSV UTF-8 para enviar aqui.</small>
+          </div>
+        </article>
+      </section>
+
+      <section class="metric-grid import-metrics">
+        <article class="metric accent"><span>Linhas lidas</span><strong id="import-total">0</strong><small>Registros encontrados no arquivo</small></article>
+        <article class="metric income-metric"><span>Prontas</span><strong id="import-ready">0</strong><small>Podem ser importadas</small></article>
+        <article class="metric"><span>Com aviso</span><strong id="import-warnings">0</strong><small>Serão importadas com ajuste</small></article>
+        <article class="metric"><span>Ignoradas</span><strong id="import-skipped">0</strong><small>Duplicadas ou inválidas</small></article>
+      </section>
+
+      <section class="panel import-preview-panel">
+        <div class="section-head import-preview-head">
+          <div>
+            <p class="eyebrow">PRÉVIA</p>
+            <h2>Revise antes de confirmar</h2>
+          </div>
+          <button class="btn secondary" id="confirm-import" type="button" disabled>Importar movimentações</button>
+        </div>
+
+        <div id="import-empty" class="empty-state">
+          <strong>Nenhum arquivo carregado.</strong>
+          <span>Escolha um CSV/OFX acima para gerar a prévia.</span>
+        </div>
+
+        <div class="import-table-wrap" id="import-table-wrap" hidden>
+          <table class="import-table">
+            <thead>
+              <tr>
+                <th>Status</th>
+                <th>Data</th>
+                <th>Tipo</th>
+                <th>Descrição</th>
+                <th>Valor</th>
+                <th>Categoria</th>
+                <th>Conta / cartão</th>
+              </tr>
+            </thead>
+            <tbody id="import-preview-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel import-history-panel">
+        <div class="section-head">
+          <div><p class="eyebrow">HISTÓRICO</p><h2>Importações recentes</h2></div>
+          <span class="pill">Local</span>
+        </div>
+        <div id="import-history" class="import-history"></div>
+      </section>
+    </main>
+  </div>
+
+  <nav class="mobile-nav compact-mobile-nav">
+    <a href="../dashboard/"><span>⌂</span>Início</a>
+    <a class="active" href="../movimentacoes/"><span>↕</span>Movimentos</a>
+    <a href="../planejamento/"><span>◫</span>Planejar</a>
+    <a href="../analises/"><span>⌁</span>Análises</a>
+    <a href="../configuracoes/"><span>⚙</span>Ajustes</a>
+  </nav>
+
+  <script src="../assets/demo.js"></script>
+  <script src="../assets/import.js"></script>
+</body>
+</html>
