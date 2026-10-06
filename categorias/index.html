@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Categorias · VisionMoneyPro</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <div class="dash-shell">
+    <aside class="sidebar">
+      <a class="brand" href="../"><span class="brand-mark">V</span><strong>VisionMoneyPro</strong></a>
+      <nav>
+        <a href="../dashboard/">Visão geral</a>
+        <a class="active" href="../movimentacoes/">Movimentações</a>
+        <a href="../planejamento/">Planejamento</a>
+        <a href="../analises/">Análises</a>
+        <a href="../configuracoes/">Configurações</a>
+      </nav>
+    </aside>
+    <main class="dash-main">
+      <header class="dash-head">
+        <div><p class="eyebrow">ORGANIZAÇÃO</p><h1>Categorias</h1><p class="muted dashboard-subtitle">Adapte a classificação de receitas e despesas ao seu jeito.</p></div>
+        <a class="btn ghost" href="../movimentacoes/">Voltar a Movimentações</a>
+      </header>
+
+      <div id="category-status" class="notice category-notice" hidden></div>
+
+      <section class="category-layout">
+        <article class="panel category-editor">
+          <p class="eyebrow">NOVA CATEGORIA</p>
+          <h2>Personalizar organização</h2>
+          <form id="category-form" class="transaction-form settings-form">
+            <label>Tipo
+              <select id="category-kind">
+                <option value="expense">Despesa</option>
+                <option value="income">Receita</option>
+              </select>
+            </label>
+            <label>Nome
+              <input id="category-name" maxlength="60" placeholder="Ex.: Pets, Viagens, Bônus" required>
+            </label>
+            <div class="form-actions field-wide">
+              <button class="btn primary" type="submit">Adicionar categoria</button>
+            </div>
+          </form>
+          <div class="notice category-info">
+            As categorias padrão ficam protegidas. Categorias personalizadas podem ser excluídas enquanto não estiverem em uso.
+          </div>
+        </article>
+
+        <section class="category-columns">
+          <article class="panel">
+            <div class="section-head"><div><p class="eyebrow">DESPESAS</p><h2>Categorias de gastos</h2></div><span class="pill"><b id="expense-category-count">0</b> categorias</span></div>
+            <div class="category-list" id="expense-category-list"></div>
+          </article>
+          <article class="panel">
+            <div class="section-head"><div><p class="eyebrow">RECEITAS</p><h2>Categorias de entradas</h2></div><span class="pill"><b id="income-category-count">0</b> categorias</span></div>
+            <div class="category-list" id="income-category-list"></div>
+          </article>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <nav class="mobile-nav compact-mobile-nav">
+    <a href="../dashboard/"><span>⌂</span>Início</a>
+    <a class="active" href="../movimentacoes/"><span>↕</span>Movimentos</a>
+    <a href="../planejamento/"><span>◫</span>Planejar</a>
+    <a href="../analises/"><span>⌁</span>Análises</a>
+    <a href="../configuracoes/"><span>⚙</span>Ajustes</a>
+  </nav>
+  <script src="../assets/demo.js"></script>
+  <script src="../assets/categories.js"></script>
+</body>
+</html>
