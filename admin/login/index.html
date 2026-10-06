@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Acesso Admin · VisionMoneyPro</title>
+  <link rel="stylesheet" href="../../assets/styles.css">
+</head>
+<body class="admin-login-body">
+  <main class="admin-login-shell">
+    <section class="admin-login-card">
+      <a class="brand" href="../../"><span class="brand-mark">V</span><strong>VisionMoneyPro</strong></a>
+
+      <div class="admin-login-copy">
+        <p class="eyebrow">ACESSO ADMINISTRATIVO</p>
+        <h1>Painel de operação</h1>
+        <p class="muted">Esta etapa protege apenas a demonstração local. A autenticação real do Admin será feita no backend quando o Supabase estiver conectado.</p>
+      </div>
+
+      <form id="admin-login-form" class="admin-login-form">
+        <label>E-mail administrativo
+          <input id="admin-login-email" type="email" value="admin@visionmoneypro.demo" autocomplete="username" required>
+        </label>
+
+        <label>Chave de demonstração
+          <input id="admin-login-key" type="password" value="VMP-DEMO-ADMIN" autocomplete="current-password" required>
+        </label>
+
+        <button class="btn primary" type="submit">Entrar no Admin</button>
+      </form>
+
+      <div id="admin-login-error" class="planning-warning error" hidden></div>
+
+      <div class="admin-login-demo-box">
+        <strong>Credenciais da demonstração</strong>
+        <span>admin@visionmoneypro.demo</span>
+        <span>VMP-DEMO-ADMIN</span>
+        <small>Como tudo roda no navegador, estas credenciais não são uma barreira de segurança real.</small>
+      </div>
+
+      <a class="admin-login-back" href="../../dashboard/">← Voltar ao produto</a>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const SESSION_KEY = "vmp_admin_session_v1";
+      const form = document.getElementById("admin-login-form");
+      const error = document.getElementById("admin-login-error");
+
+      if (sessionStorage.getItem(SESSION_KEY) === "active") {
+        window.location.replace("../");
+        return;
+      }
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const email = document.getElementById("admin-login-email").value.trim().toLowerCase();
+        const key = document.getElementById("admin-login-key").value;
+
+        if (email !== "admin@visionmoneypro.demo" || key !== "VMP-DEMO-ADMIN") {
+          error.textContent = "Credenciais de demonstração inválidas.";
+          error.hidden = false;
+          return;
+        }
+
+        sessionStorage.setItem(SESSION_KEY, "active");
+        window.location.replace("../");
+      });
+    })();
+  </script>
+</body>
+</html>
