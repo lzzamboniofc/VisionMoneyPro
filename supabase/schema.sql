@@ -136,6 +136,19 @@ create table if not exists public.credit_cards (
   unique (workspace_id, id)
 );
 
+create table if not exists public.import_batches (
+  id uuid primary key default gen_random_uuid(),
+  workspace_id uuid not null references public.workspaces(id) on delete cascade,
+  file_name text not null check (char_length(trim(file_name)) between 1 and 180),
+  source_format text not null check (source_format in ('csv', 'ofx')),
+  imported_count integer not null default 0 check (imported_count >= 0),
+  skipped_count integer not null default 0 check (skipped_count >= 0),
+  warning_count integer not null default 0 check (warning_count >= 0),
+  created_by uuid not null references auth.users(id),
+  created_at timestamptz not null default now(),
+  unique (workspace_id, id)
+);
+
 -- ---------------------------------------------------------------------------
 -- Financial entries
 -- ---------------------------------------------------------------------------
@@ -155,6 +168,8 @@ create table if not exists public.expenses (
   installment_number smallint check (installment_number is null or installment_number between 1 and 120),
   installment_group_id uuid,
   original_amount numeric(14,2) check (original_amount is null or original_amount > 0),
+  import_batch_id uuid,
+  import_fingerprint text,
   notes text,
   created_by uuid not null references auth.users(id),
   created_at timestamptz not null default now(),
@@ -167,7 +182,9 @@ create table if not exists public.expenses (
   foreign key (workspace_id, account_id)
     references public.financial_accounts(workspace_id, id) on delete restrict,
   foreign key (workspace_id, credit_card_id)
-    references public.credit_cards(workspace_id, id) on delete restrict
+    references public.credit_cards(workspace_id, id) on delete restrict,
+  foreign key (workspace_id, import_batch_id)
+    references public.import_batches(workspace_id, id) on delete set null
 );
 
 create table if not exists public.incomes (
@@ -180,6 +197,8 @@ create table if not exists public.incomes (
   income_date date not null default current_date,
   status public.entry_status not null default 'completed',
   source text,
+  import_batch_id uuid,
+  import_fingerprint text,
   notes text,
   created_by uuid not null references auth.users(id),
   created_at timestamptz not null default now(),
@@ -187,7 +206,9 @@ create table if not exists public.incomes (
   foreign key (workspace_id, category_id)
     references public.categories(workspace_id, id) on delete restrict,
   foreign key (workspace_id, account_id)
-    references public.financial_accounts(workspace_id, id) on delete restrict
+    references public.financial_accounts(workspace_id, id) on delete restrict,
+  foreign key (workspace_id, import_batch_id)
+    references public.import_batches(workspace_id, id) on delete set null
 );
 
 create table if not exists public.transfers (
@@ -383,8 +404,19 @@ create unique index if not exists financial_accounts_one_default_idx
 create index if not exists credit_cards_workspace_active_idx
   on public.credit_cards (workspace_id, is_active);
 
+create index if not exists import_batches_workspace_created_idx
+  on public.import_batches (workspace_id, created_at desc);
+
 create index if not exists expenses_workspace_date_idx
   on public.expenses (workspace_id, expense_date desc);
+
+create unique index if not exists expenses_workspace_import_fingerprint_idx
+  on public.expenses (workspace_id, import_fingerprint)
+  where import_fingerprint is not null;
+
+create unique index if not exists incomes_workspace_import_fingerprint_idx
+  on public.incomes (workspace_id, import_fingerprint)
+  where import_fingerprint is not null;
 
 create index if not exists expenses_workspace_category_date_idx
   on public.expenses (workspace_id, category_id, expense_date desc);
@@ -686,6 +718,7 @@ alter table public.workspace_members enable row level security;
 alter table public.categories enable row level security;
 alter table public.financial_accounts enable row level security;
 alter table public.credit_cards enable row level security;
+alter table public.import_batches enable row level security;
 alter table public.expenses enable row level security;
 alter table public.incomes enable row level security;
 alter table public.transfers enable row level security;
@@ -847,6 +880,16 @@ drop policy if exists credit_cards_delete on public.credit_cards;
 create policy credit_cards_delete on public.credit_cards for delete to authenticated
 using (private.is_workspace_member(workspace_id));
 
+drop policy if exists import_batches_select on public.import_batches;
+create policy import_batches_select on public.import_batches for select to authenticated
+using (private.is_workspace_member(workspace_id));
+drop policy if exists import_batches_insert on public.import_batches;
+create policy import_batches_insert on public.import_batches for insert to authenticated
+with check (private.is_workspace_member(workspace_id) and created_by = (select auth.uid()));
+drop policy if exists import_batches_delete on public.import_batches;
+create policy import_batches_delete on public.import_batches for delete to authenticated
+using (private.is_workspace_member(workspace_id));
+
 drop policy if exists expenses_select on public.expenses;
 create policy expenses_select on public.expenses for select to authenticated
 using (private.is_workspace_member(workspace_id));
@@ -1003,6 +1046,7 @@ grant select, insert, update, delete on public.workspace_members to authenticate
 grant select, insert, update, delete on public.categories to authenticated;
 grant select, insert, update, delete on public.financial_accounts to authenticated;
 grant select, insert, update, delete on public.credit_cards to authenticated;
+grant select, insert, delete on public.import_batches to authenticated;
 grant select, insert, update, delete on public.expenses to authenticated;
 grant select, insert, update, delete on public.incomes to authenticated;
 grant select, insert, delete on public.transfers to authenticated;
