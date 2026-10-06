@@ -151,3 +151,20 @@ h1,h2,h3,strong{letter-spacing:-.018em}
   .compact-form{grid-template-columns:1fr}
   .compact-form .field-wide{grid-column:auto}
 }
+
+/* Dashboard operational modules + consistent mobile navigation */
+.dashboard-ops-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:14px}
+.dashboard-op-card{display:flex;align-items:center;justify-content:space-between;gap:20px;color:inherit;text-decoration:none}
+.dashboard-op-card:hover{border-color:rgba(124,92,255,.3);background:linear-gradient(155deg,rgba(26,34,60,.94),rgba(15,20,37,.82))}
+.dashboard-op-card h2{margin:.4rem 0}
+.op-value{display:grid;gap:4px;min-width:170px;text-align:right}
+.op-value strong{font-size:1.45rem;color:#f5f3ff}
+.op-value span{color:var(--muted);font-size:.72rem}
+@media(max-width:900px){.dashboard-ops-grid{grid-template-columns:1fr}}
+@media(max-width:680px){
+  .dashboard-op-card{align-items:flex-start;flex-direction:column}
+  .op-value{min-width:0;text-align:left}
+  .mobile-nav.mobile-nav-wide{display:flex;grid-template-columns:none;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none}
+  .mobile-nav.mobile-nav-wide::-webkit-scrollbar{display:none}
+  .mobile-nav.mobile-nav-wide a{flex:0 0 auto;min-width:72px;padding:10px 8px}
+}
