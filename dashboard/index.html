@@ -27,6 +27,10 @@
           <p class="muted dashboard-subtitle" id="workspace-subtitle">Sua visão mensal em um só lugar.</p>
         </div>
         <div class="header-actions">
+          <a class="notification-bell" href="../notificacoes/" aria-label="Abrir notificações">
+            <span class="notification-bell-icon">♢</span>
+            <b id="dashboard-notification-badge" hidden>0</b>
+          </a>
           <a class="btn ghost" href="../busca/">⌕ Buscar</a>
           <span class="pill" id="workspace-mode">Demonstração</span>
         </div>
@@ -80,6 +84,7 @@
             <a class="btn secondary" href="../receitas/">+ Nova receita</a>
           </div>
           <div class="list">
+            <div><a href="../notificacoes/">Notificações</a></div>
             <div><a href="../importacao/">Importar extrato</a></div>
             <div><a href="../cartoes/">Cartões e faturas</a></div>
             <div><a href="../contas-a-pagar/">Contas a pagar</a></div>
@@ -229,6 +234,11 @@
       document.getElementById("dashboard-payables-note").textContent = payableSummary.overdueCount > 0
         ? payableSummary.pendingCount + " pendente(s) · " + payableSummary.overdueCount + " atrasada(s)"
         : payableSummary.pendingCount + " pendente(s)";
+
+      const unreadNotifications = api.getUnreadNotificationCount();
+      const notificationBadge = document.getElementById("dashboard-notification-badge");
+      notificationBadge.textContent = unreadNotifications > 99 ? "99+" : String(unreadNotifications);
+      notificationBadge.hidden = unreadNotifications === 0;
 
       const insights = api.getFinancialInsights();
       const insightList = document.getElementById("dashboard-insights");
