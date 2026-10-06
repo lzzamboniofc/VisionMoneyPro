@@ -734,3 +734,20 @@ h1,h2,h3,strong{letter-spacing:-.018em}
   .transfer-row{grid-template-columns:minmax(0,1fr) auto}
   .transfer-row>button{grid-column:1/-1;justify-self:start}
 }
+
+/* Dashboard financial insights */
+.dashboard-insights-panel{margin-top:14px}
+.dashboard-insights{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:16px}
+.dashboard-insight{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:11px;align-items:center;padding:13px;border:1px solid var(--border);border-radius:14px;color:inherit;background:rgba(255,255,255,.018);transition:.18s ease}
+.dashboard-insight:hover{transform:translateY(-1px);border-color:rgba(124,92,255,.28);background:rgba(255,255,255,.03)}
+.dashboard-insight-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;font-weight:900;color:#cdd5e6;background:rgba(148,163,184,.09)}
+.dashboard-insight>div{min-width:0}
+.dashboard-insight strong{display:block;font-size:.8rem}
+.dashboard-insight p{margin:4px 0 0;color:var(--muted);font-size:.7rem;line-height:1.45}
+.dashboard-insight.danger{border-color:rgba(251,113,133,.13)}
+.dashboard-insight.danger .dashboard-insight-icon{color:#fecdd3;background:rgba(251,113,133,.09)}
+.dashboard-insight.warning .dashboard-insight-icon{color:#fde6aa;background:rgba(245,190,78,.09)}
+.dashboard-insight.info .dashboard-insight-icon{color:#bfd2ff;background:rgba(101,153,255,.09)}
+.dashboard-insight.positive .dashboard-insight-icon{color:#a7f3e8;background:rgba(94,234,212,.09)}
+.compact-empty{min-height:110px}
+@media(max-width:820px){.dashboard-insights{grid-template-columns:1fr}}
