@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Movimentações · VisionMoneyPro</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <div class="dash-shell">
+    <aside class="sidebar">
+      <a class="brand" href="../"><span class="brand-mark">V</span><strong>VisionMoneyPro</strong></a>
+      <nav>
+        <a href="../dashboard/">Visão geral</a>
+        <a class="active" href="./">Movimentações</a>
+        <a href="../planejamento/">Planejamento</a>
+        <a href="../analises/">Análises</a>
+        <a href="../configuracoes/">Configurações</a>
+      </nav>
+    </aside>
+
+    <main class="dash-main">
+      <header class="dash-head">
+        <div>
+          <p class="eyebrow">MOVIMENTAÇÕES</p>
+          <h1>Seu dinheiro em movimento</h1>
+          <p class="muted dashboard-subtitle">Acesse lançamentos, cartões, faturas e compromissos em um só lugar.</p>
+        </div>
+        <span class="pill">Central financeira</span>
+      </header>
+
+      <section class="metric-grid">
+        <article class="metric accent"><span>Saldo do mês</span><strong id="hub-balance">R$ 0,00</strong><small>Receitas menos despesas</small></article>
+        <article class="metric income-metric"><span>Receitas</span><strong id="hub-income">R$ 0,00</strong><small id="hub-income-count">0 lançamento(s)</small></article>
+        <article class="metric"><span>Gastos</span><strong id="hub-expense">R$ 0,00</strong><small id="hub-expense-count">0 lançamento(s)</small></article>
+        <article class="metric"><span>Contas pendentes</span><strong id="hub-payables">R$ 0,00</strong><small id="hub-payables-count">0 compromisso(s)</small></article>
+      </section>
+
+      <section class="movement-grid">
+        <a class="panel movement-card expense-card" href="../gastos/">
+          <div class="movement-icon">−</div>
+          <div><p class="eyebrow">SAÍDAS</p><h2>Gastos</h2><p class="muted">Cadastre e organize despesas por categoria e cartão.</p></div>
+          <span class="movement-arrow">→</span>
+        </a>
+        <a class="panel movement-card income-card" href="../receitas/">
+          <div class="movement-icon">+</div>
+          <div><p class="eyebrow">ENTRADAS</p><h2>Receitas</h2><p class="muted">Acompanhe salários, freelas e outras fontes de renda.</p></div>
+          <span class="movement-arrow">→</span>
+        </a>
+        <a class="panel movement-card card-card" href="../cartoes/">
+          <div class="movement-icon">▣</div>
+          <div><p class="eyebrow">CRÉDITO</p><h2>Cartões e faturas</h2><p class="muted">Visualize limites, compras e fechamento das faturas.</p></div>
+          <span class="movement-arrow">→</span>
+        </a>
+        <a class="panel movement-card payable-card" href="../contas-a-pagar/">
+          <div class="movement-icon">✓</div>
+          <div><p class="eyebrow">AGENDA</p><h2>Contas a pagar</h2><p class="muted">Controle vencimentos, atrasos e pagamentos.</p></div>
+          <span class="movement-arrow">→</span>
+        </a>
+      </section>
+
+      <section class="movement-secondary-grid">
+        <a class="panel" href="../recorrencias/">
+          <p class="eyebrow">AUTOMAÇÃO</p><h2>Recorrências</h2>
+          <p class="muted">Prepare salário, aluguel, assinaturas e outros lançamentos que se repetem.</p>
+        </a>
+        <a class="panel" href="../categorias/">
+          <p class="eyebrow">ORGANIZAÇÃO</p><h2>Categorias</h2>
+          <p class="muted">Personalize como receitas e despesas são classificadas.</p>
+        </a>
+      </section>
+    </main>
+  </div>
+
+  <nav class="mobile-nav compact-mobile-nav">
+    <a href="../dashboard/"><span>⌂</span>Início</a>
+    <a class="active" href="./"><span>↕</span>Movimentos</a>
+    <a href="../planejamento/"><span>◫</span>Planejar</a>
+    <a href="../analises/"><span>⌁</span>Análises</a>
+    <a href="../configuracoes/"><span>⚙</span>Ajustes</a>
+  </nav>
+
+  <script src="../assets/demo.js"></script>
+  <script>
+    const api = VisionMoneyProDemo;
+    const summary = api.getMonthSummary();
+    const payables = api.getPayablesSummary();
+    document.getElementById("hub-balance").textContent = api.formatCurrency(summary.balance);
+    document.getElementById("hub-income").textContent = api.formatCurrency(summary.incomeTotal);
+    document.getElementById("hub-expense").textContent = api.formatCurrency(summary.expenseTotal);
+    document.getElementById("hub-income-count").textContent = summary.incomeCount + " lançamento(s)";
+    document.getElementById("hub-expense-count").textContent = summary.expenseCount + " lançamento(s)";
+    document.getElementById("hub-payables").textContent = api.formatCurrency(payables.pendingTotal);
+    document.getElementById("hub-payables-count").textContent = payables.pendingCount + " compromisso(s)";
+  </script>
+</body>
+</html>
