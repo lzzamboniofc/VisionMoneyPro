@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Contas e carteiras · VisionMoneyPro</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <div class="dash-shell">
+    <aside class="sidebar">
+      <a class="brand" href="../"><span class="brand-mark">V</span><strong>VisionMoneyPro</strong></a>
+      <nav>
+        <a href="../dashboard/">Visão geral</a>
+        <a class="active" href="../movimentacoes/">Movimentações</a>
+        <a href="../planejamento/">Planejamento</a>
+        <a href="../analises/">Análises</a>
+        <a href="../configuracoes/">Configurações</a>
+      </nav>
+    </aside>
+
+    <main class="dash-main">
+      <header class="dash-head">
+        <div>
+          <p class="eyebrow">CONTAS E CARTEIRAS</p>
+          <h1>Onde seu dinheiro está</h1>
+          <p class="muted dashboard-subtitle">Acompanhe saldo por conta e transfira valores sem criar receitas ou despesas falsas.</p>
+        </div>
+        <a class="btn ghost" href="../movimentacoes/">Voltar a Movimentações</a>
+      </header>
+
+      <div id="accounts-status" class="notice accounts-notice" hidden></div>
+
+      <section class="metric-grid account-metrics">
+        <article class="metric accent"><span>Saldo total</span><strong id="accounts-total-balance">R$ 0,00</strong><small>Soma das contas ativas</small></article>
+        <article class="metric"><span>Contas ativas</span><strong id="accounts-active-count">0</strong><small>Carteiras disponíveis</small></article>
+        <article class="metric income-metric"><span>Conta padrão</span><strong class="metric-text" id="accounts-default-name">—</strong><small>Usada automaticamente nos lançamentos</small></article>
+      </section>
+
+      <section class="accounts-layout">
+        <article class="panel account-editor-panel">
+          <p class="eyebrow">CONTA</p>
+          <h2 id="account-editor-title">Nova conta</h2>
+          <form id="account-form" class="transaction-form">
+            <input type="hidden" id="account-id">
+            <label class="field-wide">Nome
+              <input id="account-name" maxlength="80" placeholder="Ex.: Nubank, Itaú, Dinheiro" required>
+            </label>
+            <label>Tipo
+              <select id="account-type">
+                <option value="checking">Conta corrente</option>
+                <option value="savings">Poupança</option>
+                <option value="digital">Carteira digital</option>
+                <option value="cash">Dinheiro</option>
+                <option value="investment">Investimentos</option>
+              </select>
+            </label>
+            <label>Instituição
+              <input id="account-institution" maxlength="80" placeholder="Opcional">
+            </label>
+            <label class="field-wide">Saldo inicial
+              <input id="account-initial" type="number" min="0" step="0.01" placeholder="0,00">
+              <small class="field-helper">Valor que já existia na conta antes de começar a usar o VisionMoneyPro.</small>
+            </label>
+            <label class="account-default-option field-wide">
+              <input id="account-default" type="checkbox">
+              <span><strong>Usar como conta padrão</strong><small>Novas receitas e gastos sem cartão usarão esta conta por padrão.</small></span>
+            </label>
+            <div class="form-actions field-wide">
+              <button class="btn primary" id="save-account" type="submit">Salvar conta</button>
+              <button class="btn ghost" id="cancel-account-edit" type="button" hidden>Cancelar edição</button>
+            </div>
+          </form>
+        </article>
+
+        <section>
+          <div id="accounts-empty" class="empty-state" hidden>
+            <strong>Nenhuma conta cadastrada.</strong>
+            <span>Cadastre onde seu dinheiro fica para acompanhar saldos reais.</span>
+          </div>
+          <div id="accounts-list" class="accounts-list"></div>
+        </section>
+      </section>
+
+      <section class="transfer-layout">
+        <article class="panel">
+          <p class="eyebrow">TRANSFERÊNCIA</p>
+          <h2>Mover dinheiro entre contas</h2>
+          <form id="transfer-form" class="transaction-form transfer-form">
+            <label>Origem
+              <select id="transfer-from" required></select>
+            </label>
+            <label>Destino
+              <select id="transfer-to" required></select>
+            </label>
+            <label>Valor
+              <input id="transfer-amount" type="number" min="0.01" step="0.01" placeholder="0,00" required>
+            </label>
+            <label>Data
+              <input id="transfer-date" type="date" required>
+            </label>
+            <label class="field-wide">Observação
+              <input id="transfer-notes" maxlength="300" placeholder="Opcional">
+            </label>
+            <div class="form-actions field-wide">
+              <button class="btn secondary" type="submit">Registrar transferência</button>
+            </div>
+          </form>
+        </article>
+
+        <article class="panel">
+          <p class="eyebrow">HISTÓRICO</p>
+          <h2>Transferências recentes</h2>
+          <div id="transfer-list" class="transfer-list"></div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <nav class="mobile-nav compact-mobile-nav">
+    <a href="../dashboard/"><span>⌂</span>Início</a>
+    <a class="active" href="../movimentacoes/"><span>↕</span>Movimentos</a>
+    <a href="../planejamento/"><span>◫</span>Planejar</a>
+    <a href="../analises/"><span>⌁</span>Análises</a>
+    <a href="../configuracoes/"><span>⚙</span>Ajustes</a>
+  </nav>
+
+  <script src="../assets/demo.js"></script>
+  <script src="../assets/accounts.js"></script>
+</body>
+</html>
