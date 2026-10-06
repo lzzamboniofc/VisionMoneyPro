@@ -8,7 +8,6 @@
   const totalRemaining = document.getElementById("total-remaining");
   const incomeInput = document.getElementById("planning-income");
   const allocationPercent = document.getElementById("allocation-percent");
-  const allocationSummary = document.getElementById("allocation-summary");
   const allocationFill = document.getElementById("allocation-track-fill");
   const allocationAvailable = document.getElementById("allocation-available");
   const recordedIncomeHint = document.getElementById("recorded-income-hint");
@@ -66,16 +65,17 @@
             </div>
           </div>
 
-          <div class="budget-progress-labels">
-            <span>Uso do limite</span>
-            <strong>${planned > 0 ? usagePercent + "%" : "—"}</strong>
-          </div>
-          <div class="progress-track budget-usage-track ${usagePercent > 100 ? "over-limit" : ""}">
-            <span style="width:${cappedUsage}%"></span>
-          </div>
-
-          <div class="budget-allocation-row">
-            <span>Este limite compromete <b>${incomeShare}%</b> da renda do mês</span>
+          <div
+            class="progress-track budget-usage-track ${usagePercent > 100 ? "over-limit" : ""}"
+            role="progressbar"
+            aria-label="Uso do limite de ${category}"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="${cappedUsage}"
+            title="${planned > 0 ? usagePercent + "% do limite utilizado" : "Sem limite definido"}"
+          >
+            <span class="budget-progress-fill" style="--progress:${cappedUsage}%"></span>
+            <strong class="progress-track-label">${planned > 0 ? usagePercent + "%" : "—"}</strong>
           </div>
 
           <div class="budget-actions">
@@ -94,9 +94,8 @@
     totalRemaining.textContent = api.formatCurrency(allocation.available);
 
     allocationPercent.textContent = allocation.percent + "%";
-    allocationSummary.textContent =
-      api.formatCurrency(allocation.allocated) + " de " + api.formatCurrency(allocation.income) + " distribuídos";
-    allocationFill.style.width = allocation.percent + "%";
+    allocationFill.style.setProperty("--progress", allocation.percent + "%");
+    allocationFill.parentElement?.setAttribute("aria-valuenow", String(allocation.percent));
     allocationAvailable.textContent = api.formatCurrency(allocation.available) + " disponível para novos limites";
     recordedIncomeHint.textContent = "Receitas registradas no mês: " + api.formatCurrency(monthSummary.incomeTotal);
 
