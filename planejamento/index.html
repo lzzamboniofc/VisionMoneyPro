@@ -29,10 +29,43 @@
         <div class="header-actions"><input class="month-picker" id="planning-month" type="month"><a class="btn ghost" href="../metas/">Ver metas</a></div>
       </header>
 
+      <section class="panel income-planning-panel">
+        <div class="income-planning-head">
+          <div>
+            <p class="eyebrow">RENDA DO MÊS</p>
+            <h2>Quanto você tem disponível para distribuir?</h2>
+            <p class="muted">Informe o salário/renda líquida usada como base do orçamento. Os limites por categoria serão abatidos desse valor.</p>
+          </div>
+          <div class="income-planning-form">
+            <label>Renda disponível
+              <div class="money-input-wrap"><span>R$</span><input id="planning-income" type="number" min="0.01" step="0.01" placeholder="0,00"></div>
+            </label>
+            <div class="income-planning-actions">
+              <button class="btn primary" id="save-planning-income" type="button">Salvar renda</button>
+              <button class="btn ghost" id="use-recorded-income" type="button">Usar receitas do mês</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="allocation-overview">
+          <div class="allocation-overview-head">
+            <div><span>Comprometimento da renda</span><strong id="allocation-percent">0%</strong></div>
+            <div><span id="allocation-summary">R$ 0,00 de R$ 0,00 distribuídos</span></div>
+          </div>
+          <div class="allocation-track"><span id="allocation-track-fill"></span></div>
+          <div class="allocation-foot">
+            <span id="allocation-available">R$ 0,00 disponível para novos limites</span>
+            <span id="recorded-income-hint">Receitas registradas no mês: R$ 0,00</span>
+          </div>
+        </div>
+        <div id="planning-warning" class="planning-warning" hidden></div>
+      </section>
+
       <section class="metric-grid planning-metrics">
-        <article class="metric accent"><span>Planejado</span><strong id="total-budget">R$ 0,00</strong><small>Soma dos limites definidos</small></article>
-        <article class="metric"><span>Gasto no mês</span><strong id="total-spent">R$ 0,00</strong><small>Com base nos lançamentos</small></article>
-        <article class="metric"><span>Disponível</span><strong id="total-remaining">R$ 0,00</strong><small>Planejado menos gasto</small></article>
+        <article class="metric accent"><span>Renda-base</span><strong id="total-income">R$ 0,00</strong><small>Valor disponível para orçamento</small></article>
+        <article class="metric"><span>Limites definidos</span><strong id="total-budget">R$ 0,00</strong><small>Soma do planejamento por categoria</small></article>
+        <article class="metric"><span>Livre para distribuir</span><strong id="total-remaining">R$ 0,00</strong><small>Renda-base menos limites</small></article>
+        <article class="metric"><span>Gasto real no mês</span><strong id="total-spent">R$ 0,00</strong><small>Com base nos lançamentos</small></article>
       </section>
 
       <section class="panel planning-panel">
