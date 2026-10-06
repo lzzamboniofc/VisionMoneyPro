@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Busca global · VisionMoneyPro</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <div class="dash-shell">
+    <aside class="sidebar">
+      <a class="brand" href="../"><span class="brand-mark">V</span><strong>VisionMoneyPro</strong></a>
+      <nav>
+        <a href="../dashboard/">Visão geral</a>
+        <a href="../movimentacoes/">Movimentações</a>
+        <a href="../planejamento/">Planejamento</a>
+        <a href="../analises/">Análises</a>
+        <a href="../configuracoes/">Configurações</a>
+      </nav>
+    </aside>
+
+    <main class="dash-main">
+      <header class="dash-head">
+        <div>
+          <p class="eyebrow">BUSCA GLOBAL</p>
+          <h1>Encontre qualquer coisa</h1>
+          <p class="muted dashboard-subtitle">Pesquise lançamentos, contas, cartões, compromissos, metas e recorrências em um só lugar.</p>
+        </div>
+        <a class="btn ghost" href="../dashboard/">Voltar ao dashboard</a>
+      </header>
+
+      <section class="panel global-search-panel">
+        <div class="global-search-bar">
+          <span class="global-search-icon">⌕</span>
+          <input id="global-search-input" type="search" autocomplete="off" placeholder="Ex.: supermercado, Nubank, aluguel, reserva...">
+          <select id="global-search-type">
+            <option value="">Tudo</option>
+            <option value="expense">Gastos</option>
+            <option value="income">Receitas</option>
+            <option value="payable">Contas a pagar</option>
+            <option value="account">Contas e carteiras</option>
+            <option value="card">Cartões</option>
+            <option value="goal">Metas</option>
+            <option value="recurrence">Recorrências</option>
+          </select>
+        </div>
+        <div class="global-search-summary">
+          <span id="global-search-count">0 resultado(s)</span>
+          <span>Atalho: <kbd>/</kbd> para focar a busca</span>
+        </div>
+      </section>
+
+      <section class="global-search-layout">
+        <article class="panel">
+          <div class="section-head">
+            <div><p class="eyebrow">RESULTADOS</p><h2 id="global-search-title">Comece digitando</h2></div>
+          </div>
+
+          <div id="global-search-empty" class="empty-state">
+            <strong>O VisionMoneyPro procura em todo o seu histórico local.</strong>
+            <span>Digite pelo menos 2 caracteres para iniciar.</span>
+          </div>
+          <div id="global-search-results" class="global-search-results"></div>
+        </article>
+
+        <aside class="panel global-search-help">
+          <p class="eyebrow">ONDE BUSCAMOS</p>
+          <h2>Uma busca, vários módulos</h2>
+          <div class="global-search-sources">
+            <span>− Gastos</span>
+            <span>+ Receitas</span>
+            <span>✓ Contas a pagar</span>
+            <span>◫ Contas e carteiras</span>
+            <span>▣ Cartões</span>
+            <span>◎ Metas</span>
+            <span>↻ Recorrências</span>
+          </div>
+          <p class="muted">A busca também considera categoria, observação, conta e cartão quando disponíveis.</p>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+  <nav class="mobile-nav compact-mobile-nav">
+    <a href="../dashboard/"><span>⌂</span>Início</a>
+    <a href="../movimentacoes/"><span>↕</span>Movimentos</a>
+    <a href="../planejamento/"><span>◫</span>Planejar</a>
+    <a href="../analises/"><span>⌁</span>Análises</a>
+    <a href="../configuracoes/"><span>⚙</span>Ajustes</a>
+  </nav>
+
+  <script src="../assets/demo.js"></script>
+  <script src="../assets/search.js"></script>
+</body>
+</html>
