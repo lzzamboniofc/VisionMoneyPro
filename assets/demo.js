@@ -486,6 +486,7 @@
 
     upsertAccount(input, id = null) {
       const accounts = getArray(ACCOUNTS_KEY);
+      const hadActiveAccounts = accounts.some(account => account.active !== false);
       const index = id ? accounts.findIndex(account => account.id === id) : -1;
       const current = index >= 0 ? accounts[index] : null;
       const name = String(input?.name || "").trim().slice(0, 80);
@@ -520,6 +521,16 @@
       }
 
       saveArray(ACCOUNTS_KEY, accounts);
+
+      if (!hadActiveAccounts && record.active !== false) {
+        saveCollection("income", getCollection("income").map(item =>
+          item.accountId ? item : { ...item, accountId: record.id, updatedAt: new Date().toISOString() }
+        ));
+        saveCollection("expense", getCollection("expense").map(item =>
+          item.accountId || item.cardId ? item : { ...item, accountId: record.id, updatedAt: new Date().toISOString() }
+        ));
+      }
+
       return record;
     },
 
