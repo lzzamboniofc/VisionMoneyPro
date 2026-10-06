@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Cartões e faturas · VisionMoneyPro</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <div class="dash-shell">
+    <aside class="sidebar">
+      <a class="brand" href="../"><span class="brand-mark">V</span><strong>VisionMoneyPro</strong></a>
+      <nav>
+        <a href="../dashboard/">Visão geral</a>
+        <a href="../gastos/">Gastos</a>
+        <a href="../receitas/">Receitas</a>
+        <a class="active" href="./">Cartões e faturas</a>
+        <a href="../contas-a-pagar/">Contas a pagar</a>
+        <a href="../planejamento/">Planejamento</a>
+        <a href="../metas/">Metas</a>
+        <a href="../onboarding/">Configurar espaço</a>
+      </nav>
+    </aside>
+
+    <main class="dash-main">
+      <header class="dash-head">
+        <div>
+          <p class="eyebrow">CRÉDITO</p>
+          <h1>Cartões e faturas</h1>
+          <p class="muted dashboard-subtitle">Cadastre cartões e acompanhe automaticamente as compras vinculadas.</p>
+        </div>
+        <div class="header-control">
+          <label>Fatura de
+            <input class="month-picker" id="bill-month" type="month">
+          </label>
+        </div>
+      </header>
+
+      <section class="metric-grid card-metrics">
+        <article class="metric accent"><span>Cartões ativos</span><strong id="cards-count">0</strong><small>Cartões em uso</small></article>
+        <article class="metric"><span>Limite total</span><strong id="cards-limits">R$ 0,00</strong><small>Soma dos limites ativos</small></article>
+        <article class="metric"><span>Faturas</span><strong id="cards-bills">R$ 0,00</strong><small id="bill-month-label">Mês atual</small></article>
+        <article class="metric income-metric"><span>Disponível</span><strong id="cards-available">R$ 0,00</strong><small>Limite menos faturas selecionadas</small></article>
+      </section>
+
+      <section class="cards-layout">
+        <article class="panel card-editor-panel">
+          <div class="section-head">
+            <div><p class="eyebrow">CARTÃO</p><h2 id="card-editor-title">Novo cartão</h2></div>
+            <span class="pill">Local</span>
+          </div>
+          <form id="card-form" class="transaction-form compact-form">
+            <input type="hidden" id="card-id">
+            <label class="field-wide">Nome do cartão
+              <input id="card-name" maxlength="80" placeholder="Ex.: Nubank, Inter, Itaú" required>
+            </label>
+            <label>Bandeira
+              <input id="card-brand" maxlength="30" placeholder="Visa, Mastercard...">
+            </label>
+            <label>Últimos 4 dígitos
+              <input id="card-last-four" inputmode="numeric" maxlength="4" placeholder="1234">
+            </label>
+            <label>Limite
+              <input id="card-limit" type="number" min="0.01" step="0.01" placeholder="0,00" required>
+            </label>
+            <label>Dia do fechamento
+              <input id="card-closing" type="number" min="1" max="31" value="3" required>
+            </label>
+            <label>Dia do vencimento
+              <input id="card-due" type="number" min="1" max="31" value="10" required>
+            </label>
+            <div class="form-actions field-wide">
+              <button class="btn primary" id="save-card" type="submit">Salvar cartão</button>
+              <button class="btn ghost" id="cancel-card-edit" type="button" hidden>Cancelar edição</button>
+            </div>
+          </form>
+        </article>
+
+        <section class="cards-content">
+          <div id="cards-empty" class="empty-state" hidden>
+            <strong>Nenhum cartão cadastrado.</strong>
+            <span>Adicione um cartão para começar a acompanhar suas faturas.</span>
+          </div>
+          <div id="cards-list" class="cards-list"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <nav class="mobile-nav mobile-nav-five">
+    <a href="../dashboard/">Início</a>
+    <a href="../gastos/">Gastos</a>
+    <a class="active" href="./">Cartões</a>
+    <a href="../contas-a-pagar/">Contas</a>
+    <a href="../metas/">Metas</a>
+  </nav>
+
+  <script src="../assets/demo.js"></script>
+  <script src="../assets/cards.js"></script>
+</body>
+</html>
