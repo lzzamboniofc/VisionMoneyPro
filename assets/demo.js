@@ -15,6 +15,7 @@
   const ACCOUNTS_KEY = "vmp_demo_accounts";
   const TRANSFERS_KEY = "vmp_demo_transfers";
   const CARD_BILL_PAYMENTS_KEY = "vmp_demo_card_bill_payments";
+  const IMPORT_HISTORY_KEY = "vmp_demo_import_history";
 
   const safeParse = (value, fallback = null) => {
     try { return value ? JSON.parse(value) : fallback; } catch { return fallback; }
@@ -95,6 +96,8 @@
       installmentNumber: Number(input?.installmentNumber || 0) || null,
       installments: Number(input?.installments || 0) || null,
       originalAmount: normalizeMoney(input?.originalAmount || 0) || null,
+      importFingerprint: String(input?.importFingerprint || "").trim().slice(0, 240),
+      importBatchId: String(input?.importBatchId || "").trim().slice(0, 120),
       createdAt: input?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -1081,6 +1084,36 @@
     },
 
 
+
+    getImportHistory() {
+      return getArray(IMPORT_HISTORY_KEY)
+        .slice()
+        .sort((a, b) => String(b.importedAt || "").localeCompare(String(a.importedAt || "")));
+    },
+
+    addImportHistory(input) {
+      const items = getArray(IMPORT_HISTORY_KEY);
+      const record = {
+        id: newId(),
+        fileName: String(input?.fileName || "Arquivo").trim().slice(0, 180),
+        format: String(input?.format || "csv").trim().slice(0, 20),
+        importedCount: Math.max(0, Number(input?.importedCount || 0)),
+        skippedCount: Math.max(0, Number(input?.skippedCount || 0)),
+        warningCount: Math.max(0, Number(input?.warningCount || 0)),
+        importedAt: new Date().toISOString()
+      };
+      items.push(record);
+      saveArray(IMPORT_HISTORY_KEY, items.slice(-40));
+      return record;
+    },
+
+    hasImportFingerprint(fingerprint) {
+      const value = String(fingerprint || "");
+      if (!value) return false;
+      return getCollection("expense").some(item => item.importFingerprint === value) ||
+        getCollection("income").some(item => item.importFingerprint === value);
+    },
+
     getFinancialInsights() {
       const insights = [];
       const month = currentMonth();
@@ -1296,7 +1329,7 @@
         PROFILE_KEY, WORKSPACE_KEY, EXPENSES_KEY, INCOMES_KEY, BUDGETS_KEY,
         GOALS_KEY, CONTRIBUTIONS_KEY, CARDS_KEY, PAYABLES_KEY,
         CUSTOM_CATEGORIES_KEY, RECURRENCES_KEY, MEMBERS_KEY, PLANNING_INCOME_KEY,
-        ACCOUNTS_KEY, TRANSFERS_KEY, CARD_BILL_PAYMENTS_KEY
+        ACCOUNTS_KEY, TRANSFERS_KEY, CARD_BILL_PAYMENTS_KEY, IMPORT_HISTORY_KEY
       ].forEach(key => localStorage.removeItem(key));
     }
   };
