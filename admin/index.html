@@ -7,105 +7,223 @@
   <link rel="stylesheet" href="../assets/styles.css">
 </head>
 <body class="admin-body">
-  <div class="admin-shell">
-    <aside class="admin-sidebar">
+  <div class="admin-shell admin-v2-shell">
+    <aside class="admin-sidebar admin-v2-sidebar">
       <a class="brand" href="../"><span class="brand-mark">V</span><strong>VisionMoneyPro</strong></a>
-      <div class="admin-role">ADMIN PREVIEW</div>
-      <nav>
-        <a class="active" href="./">Visão geral</a>
-        <span>Usuários</span>
-        <span>Workspaces</span>
-        <span>Assinaturas</span>
-        <span>Auditoria</span>
+
+      <div class="admin-owner-card">
+        <span class="admin-owner-avatar">A</span>
+        <div><strong>Administrador</strong><small>Owner · VisionMoneyPro</small></div>
+      </div>
+
+      <nav id="admin-nav">
+        <button class="active" type="button" data-admin-view="overview"><span>⌂</span>Visão geral</button>
+        <button type="button" data-admin-view="customers"><span>◎</span>Clientes</button>
+        <button type="button" data-admin-view="workspaces"><span>◇</span>Workspaces</button>
+        <button type="button" data-admin-view="plans"><span>▤</span>Planos</button>
+        <button type="button" data-admin-view="activity"><span>≋</span>Atividade</button>
       </nav>
-      <a class="admin-back-link" href="../dashboard/">← Voltar ao app</a>
+
+      <div class="admin-sidebar-footer">
+        <div class="admin-demo-note"><i></i><span>Dados simulados</span></div>
+        <a class="admin-back-link" href="../dashboard/">← Voltar ao app</a>
+      </div>
     </aside>
 
-    <main class="admin-main">
-      <header class="admin-header">
+    <main class="admin-main admin-v2-main">
+      <header class="admin-topbar">
         <div>
           <p class="eyebrow">OPERAÇÃO DO PRODUTO</p>
-          <h1>Painel administrativo</h1>
-          <p class="muted">Estrutura de prévia. Os números e usuários abaixo são simulados e não vêm de nenhum banco real.</p>
+          <h1 id="admin-page-title">Visão geral</h1>
         </div>
-        <span class="pill admin-demo-pill">Dados simulados</span>
+        <div class="admin-topbar-actions">
+          <button class="btn ghost" id="admin-reset-demo" type="button">Restaurar dados demo</button>
+          <span class="pill admin-demo-pill">Ambiente demonstrativo</span>
+        </div>
       </header>
 
-      <section class="admin-metric-grid">
-        <article class="metric accent"><span>Usuários cadastrados</span><strong>128</strong><small>+21 no período demonstrativo</small></article>
-        <article class="metric"><span>Workspaces</span><strong>103</strong><small>62 individuais · 41 compartilhados</small></article>
-        <article class="metric income-metric"><span>Ativos em 7 dias</span><strong>67</strong><small>52% da base simulada</small></article>
-        <article class="metric"><span>Planos pagos</span><strong>19</strong><small>Prévia para futura cobrança</small></article>
+      <div id="admin-toast" class="admin-toast" hidden></div>
+
+      <section class="admin-view active" data-admin-section="overview">
+        <section class="admin-metric-grid admin-overview-metrics">
+          <article class="metric accent">
+            <span>Usuários cadastrados</span><strong id="metric-users">0</strong>
+            <small id="metric-users-note">Base total simulada</small>
+          </article>
+          <article class="metric">
+            <span>Workspaces ativos</span><strong id="metric-workspaces">0</strong>
+            <small id="metric-workspaces-note">Individual + compartilhado</small>
+          </article>
+          <article class="metric income-metric">
+            <span>MRR estimado</span><strong id="metric-mrr">R$ 0,00</strong>
+            <small id="metric-mrr-note">Receita recorrente mensal</small>
+          </article>
+          <article class="metric">
+            <span>Conversão paga</span><strong id="metric-conversion">0%</strong>
+            <small id="metric-conversion-note">Workspaces em planos pagos</small>
+          </article>
+        </section>
+
+        <section class="admin-grid admin-overview-grid">
+          <article class="panel">
+            <div class="section-head">
+              <div><p class="eyebrow">CRESCIMENTO</p><h2>Novos cadastros</h2></div>
+              <select class="admin-compact-select" id="admin-growth-window">
+                <option value="12">12 períodos</option>
+                <option value="6">6 períodos</option>
+              </select>
+            </div>
+            <div class="admin-chart" id="admin-signups-chart"></div>
+          </article>
+
+          <article class="panel">
+            <p class="eyebrow">PLANOS</p>
+            <h2>Distribuição da base</h2>
+            <div class="admin-plan-distribution" id="admin-plan-distribution"></div>
+          </article>
+        </section>
+
+        <section class="admin-overview-lower">
+          <article class="panel">
+            <div class="section-head">
+              <div><p class="eyebrow">OPERAÇÃO</p><h2>Saúde da base</h2></div>
+              <span class="pill" id="admin-health-pill">Estável</span>
+            </div>
+            <div class="admin-health-grid" id="admin-health-grid"></div>
+          </article>
+
+          <article class="panel">
+            <div class="section-head">
+              <div><p class="eyebrow">ÚLTIMOS EVENTOS</p><h2>Atividade recente</h2></div>
+              <button class="text-action" type="button" data-admin-jump="activity">Ver tudo</button>
+            </div>
+            <div class="admin-activity-list compact" id="admin-recent-activity"></div>
+          </article>
+        </section>
+
+        <section class="panel admin-privacy-card">
+          <div class="admin-privacy-icon">✓</div>
+          <div>
+            <p class="eyebrow">PRIVACIDADE POR PADRÃO</p>
+            <h2>O Admin opera a conta, não a vida financeira do cliente</h2>
+            <p class="muted">Esta interface trabalha com cadastro, workspace, plano, acesso e eventos operacionais. Gastos, receitas, cartões, metas e demais dados financeiros não fazem parte da visão administrativa normal.</p>
+          </div>
+        </section>
       </section>
 
-      <section class="admin-grid">
-        <article class="panel">
-          <div class="section-head">
-            <div><p class="eyebrow">CRESCIMENTO</p><h2>Novos cadastros</h2></div>
-            <span class="pill">12 períodos</span>
-          </div>
-          <div class="admin-chart" id="admin-signups-chart"></div>
-        </article>
-
-        <article class="panel">
-          <p class="eyebrow">PRODUTO</p>
-          <h2>Distribuição dos workspaces</h2>
-          <div class="donut-wrap">
-            <div class="donut-chart"><span>103<small>total</small></span></div>
-            <div class="donut-legend">
-              <div><i class="dot individual"></i><span>Individual</span><strong>62</strong></div>
-              <div><i class="dot shared"></i><span>Compartilhado</span><strong>41</strong></div>
+      <section class="admin-view" data-admin-section="customers">
+        <section class="panel admin-data-panel">
+          <div class="admin-data-toolbar">
+            <div>
+              <p class="eyebrow">CLIENTES</p>
+              <h2>Usuários cadastrados</h2>
+              <small class="muted" id="admin-customer-count">0 registros</small>
+            </div>
+            <div class="admin-filter-grid">
+              <input id="admin-customer-search" type="search" placeholder="Buscar nome, e-mail ou workspace">
+              <select id="admin-customer-status">
+                <option value="">Todos os status</option>
+                <option value="active">Ativos</option>
+                <option value="pending">Pendentes</option>
+                <option value="suspended">Suspensos</option>
+              </select>
+              <select id="admin-customer-plan">
+                <option value="">Todos os planos</option>
+                <option value="free">Free</option>
+                <option value="plus">Plus</option>
+                <option value="family">Family</option>
+              </select>
             </div>
           </div>
-        </article>
+
+          <div class="admin-table-wrap">
+            <table class="admin-table admin-v2-table">
+              <thead>
+                <tr><th>Cliente</th><th>Workspace</th><th>Plano</th><th>Status</th><th>Cadastro</th><th>Último acesso</th><th></th></tr>
+              </thead>
+              <tbody id="admin-customer-body"></tbody>
+            </table>
+          </div>
+        </section>
       </section>
 
-      <section class="panel admin-users-panel">
-        <div class="section-head admin-table-head">
-          <div>
-            <p class="eyebrow">CLIENTES</p>
-            <h2>Cadastros recentes</h2>
-            <small class="muted" id="admin-result-count">0 registro(s)</small>
-          </div>
-          <div class="admin-table-filters">
-            <input id="admin-search" type="search" placeholder="Buscar usuário ou workspace">
-            <select id="admin-status-filter">
-              <option value="">Todos os status</option>
-              <option>Ativo</option>
-              <option>Pendente</option>
-              <option>Inativo</option>
-            </select>
-          </div>
-        </div>
+      <section class="admin-view" data-admin-section="workspaces">
+        <section class="admin-metric-grid admin-workspace-metrics">
+          <article class="metric accent"><span>Total</span><strong id="workspace-total">0</strong><small>Workspaces cadastrados</small></article>
+          <article class="metric"><span>Individuais</span><strong id="workspace-individual">0</strong><small>Uso pessoal</small></article>
+          <article class="metric income-metric"><span>Compartilhados</span><strong id="workspace-shared">0</strong><small>2+ membros</small></article>
+          <article class="metric"><span>Média de membros</span><strong id="workspace-members-average">0</strong><small>Por workspace</small></article>
+        </section>
 
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead><tr><th>Usuário</th><th>Workspace</th><th>Plano</th><th>Status</th><th>Último acesso</th><th></th></tr></thead>
-            <tbody id="admin-users-body"></tbody>
-          </table>
-        </div>
+        <section class="panel admin-data-panel">
+          <div class="admin-data-toolbar">
+            <div><p class="eyebrow">WORKSPACES</p><h2>Contas financeiras</h2><small class="muted" id="admin-workspace-count">0 registros</small></div>
+            <div class="admin-filter-grid workspace-filters">
+              <input id="admin-workspace-search" type="search" placeholder="Buscar workspace ou owner">
+              <select id="admin-workspace-type">
+                <option value="">Todos os tipos</option>
+                <option value="individual">Individual</option>
+                <option value="shared">Compartilhado</option>
+              </select>
+              <select id="admin-workspace-plan">
+                <option value="">Todos os planos</option>
+                <option value="free">Free</option>
+                <option value="plus">Plus</option>
+                <option value="family">Family</option>
+              </select>
+            </div>
+          </div>
+          <div class="admin-workspace-grid" id="admin-workspace-grid"></div>
+        </section>
       </section>
 
-      <section class="admin-safety-grid">
-        <article class="panel">
-          <p class="eyebrow">PRIVACIDADE</p>
-          <h2>Admin sem acesso financeiro por padrão</h2>
-          <p class="muted">O painel real será desenhado para operar cadastro, status, plano, atividade e suporte sem abrir gastos, rendas ou metas dos clientes durante a operação normal.</p>
-        </article>
-        <article class="panel">
-          <p class="eyebrow">PRÓXIMA CONEXÃO</p>
-          <h2>O que entra quando o backend estiver ativo</h2>
-          <div class="list">
-            <div>Usuários reais do Supabase Auth</div>
-            <div>Workspaces e quantidade de membros</div>
-            <div>Último acesso e status operacional</div>
-            <div>Plano, assinatura e receita recorrente</div>
-            <div>Logs e trilha de auditoria</div>
+      <section class="admin-view" data-admin-section="plans">
+        <section class="admin-metric-grid admin-plan-metrics">
+          <article class="metric accent"><span>MRR</span><strong id="plans-mrr">R$ 0,00</strong><small>Receita mensal estimada</small></article>
+          <article class="metric"><span>ARR</span><strong id="plans-arr">R$ 0,00</strong><small>Projeção anual</small></article>
+          <article class="metric income-metric"><span>Pagantes</span><strong id="plans-paying">0</strong><small>Workspaces em Plus/Family</small></article>
+          <article class="metric"><span>Free → Pago</span><strong id="plans-conversion">0%</strong><small>Conversão da base</small></article>
+        </section>
+
+        <section class="admin-plan-grid" id="admin-plan-cards"></section>
+
+        <section class="panel admin-billing-note">
+          <p class="eyebrow">COBRANÇA</p>
+          <h2>Estrutura preparada, cobrança ainda não ativada</h2>
+          <p class="muted">Os valores e assinaturas desta tela são simulados. Quando o produto estiver pronto para monetização, esta área poderá receber o provedor de cobrança e refletir status de pagamento, período atual, cancelamento e MRR real.</p>
+        </section>
+      </section>
+
+      <section class="admin-view" data-admin-section="activity">
+        <section class="panel admin-data-panel">
+          <div class="admin-data-toolbar">
+            <div><p class="eyebrow">AUDITORIA</p><h2>Atividade operacional</h2><small class="muted" id="admin-activity-count">0 eventos</small></div>
+            <div class="admin-filter-grid activity-filters">
+              <input id="admin-activity-search" type="search" placeholder="Buscar evento, usuário ou workspace">
+              <select id="admin-activity-type">
+                <option value="">Todos os eventos</option>
+                <option value="signup">Cadastro</option>
+                <option value="workspace">Workspace</option>
+                <option value="plan">Plano</option>
+                <option value="access">Acesso</option>
+                <option value="admin">Ação admin</option>
+              </select>
+            </div>
           </div>
-        </article>
+          <div class="admin-activity-list" id="admin-activity-list"></div>
+        </section>
       </section>
     </main>
   </div>
+
+  <div class="admin-drawer-backdrop" id="admin-drawer-backdrop" hidden></div>
+  <aside class="admin-drawer" id="admin-customer-drawer" aria-hidden="true">
+    <div class="admin-drawer-head">
+      <div><p class="eyebrow">CLIENTE</p><h2 id="drawer-customer-name">Cliente</h2></div>
+      <button class="admin-close-button" id="admin-drawer-close" type="button" aria-label="Fechar">×</button>
+    </div>
+    <div class="admin-drawer-content" id="admin-drawer-content"></div>
+  </aside>
 
   <script src="../assets/admin.js"></script>
 </body>
