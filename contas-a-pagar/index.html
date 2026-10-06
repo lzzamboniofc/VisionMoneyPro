@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Contas a pagar · VisionMoneyPro</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <div class="dash-shell">
+    <aside class="sidebar">
+      <a class="brand" href="../"><span class="brand-mark">V</span><strong>VisionMoneyPro</strong></a>
+      <nav>
+        <a href="../dashboard/">Visão geral</a>
+        <a href="../gastos/">Gastos</a>
+        <a href="../receitas/">Receitas</a>
+        <a href="../cartoes/">Cartões e faturas</a>
+        <a class="active" href="./">Contas a pagar</a>
+        <a href="../planejamento/">Planejamento</a>
+        <a href="../metas/">Metas</a>
+        <a href="../onboarding/">Configurar espaço</a>
+      </nav>
+    </aside>
+
+    <main class="dash-main">
+      <header class="dash-head">
+        <div>
+          <p class="eyebrow">COMPROMISSOS</p>
+          <h1>Contas a pagar</h1>
+          <p class="muted dashboard-subtitle">Acompanhe vencimentos e transforme pagamentos em gastos sem digitar tudo novamente.</p>
+        </div>
+        <a class="btn ghost" href="../dashboard/">Voltar ao dashboard</a>
+      </header>
+
+      <section class="metric-grid payable-metrics">
+        <article class="metric accent"><span>Pendente</span><strong id="payable-pending-total">R$ 0,00</strong><small id="payable-pending-count">0 pendente(s)</small></article>
+        <article class="metric overdue-metric"><span>Atrasado</span><strong id="payable-overdue-total">R$ 0,00</strong><small id="payable-overdue-count">0 atrasada(s)</small></article>
+        <article class="metric income-metric"><span>Pago</span><strong id="payable-paid-total">R$ 0,00</strong><small id="payable-paid-count">0 paga(s)</small></article>
+      </section>
+
+      <section class="finance-grid payable-layout">
+        <article class="panel transaction-editor">
+          <div class="section-head">
+            <div><p class="eyebrow">CONTA</p><h2 id="payable-editor-title">Nova conta</h2></div>
+            <span class="pill">Local</span>
+          </div>
+          <form id="payable-form" class="transaction-form">
+            <input type="hidden" id="payable-id">
+            <label class="field-wide">Descrição
+              <input id="payable-description" maxlength="180" placeholder="Ex.: Energia elétrica" required>
+            </label>
+            <label>Valor
+              <input id="payable-amount" type="number" min="0.01" step="0.01" placeholder="0,00" required>
+            </label>
+            <label>Vencimento
+              <input id="payable-date" type="date" required>
+            </label>
+            <label>Categoria
+              <select id="payable-category"></select>
+            </label>
+            <label class="field-wide">Observação
+              <textarea id="payable-notes" maxlength="500" rows="3" placeholder="Opcional"></textarea>
+            </label>
+            <div class="form-actions field-wide">
+              <button class="btn primary" id="save-payable" type="submit">Salvar conta</button>
+              <button class="btn ghost" id="cancel-payable-edit" type="button" hidden>Cancelar edição</button>
+            </div>
+          </form>
+        </article>
+
+        <aside class="panel payable-help">
+          <p class="eyebrow">COMO FUNCIONA</p>
+          <h2>Do vencimento ao gasto</h2>
+          <div class="steps-list">
+            <div><span>1</span><p><strong>Cadastre a conta</strong><small>Valor, categoria e vencimento.</small></p></div>
+            <div><span>2</span><p><strong>Acompanhe o status</strong><small>Pendente, atrasada ou paga.</small></p></div>
+            <div><span>3</span><p><strong>Pague sem duplicar trabalho</strong><small>“Pagar + lançar gasto” cria a despesa automaticamente.</small></p></div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="panel transaction-history payable-history">
+        <div class="section-head history-head">
+          <div><p class="eyebrow">AGENDA</p><h2>Próximos vencimentos</h2></div>
+          <div class="filters payable-filters">
+            <input id="payable-search" type="search" placeholder="Buscar...">
+            <select id="payable-status-filter">
+              <option value="">Todos os status</option>
+              <option value="pending">Pendentes</option>
+              <option value="overdue">Atrasadas</option>
+              <option value="paid">Pagas</option>
+            </select>
+            <input id="payable-month-filter" type="month">
+          </div>
+        </div>
+        <div id="payables-empty" class="empty-state" hidden>
+          <strong>Nenhuma conta encontrada.</strong>
+          <span>Cadastre um compromisso acima ou altere os filtros.</span>
+        </div>
+        <div id="payables-list" class="payables-list"></div>
+      </section>
+    </main>
+  </div>
+
+  <nav class="mobile-nav mobile-nav-five">
+    <a href="../dashboard/">Início</a>
+    <a href="../gastos/">Gastos</a>
+    <a href="../cartoes/">Cartões</a>
+    <a class="active" href="./">Contas</a>
+    <a href="../metas/">Metas</a>
+  </nav>
+
+  <script src="../assets/demo.js"></script>
+  <script src="../assets/payables.js"></script>
+</body>
+</html>
