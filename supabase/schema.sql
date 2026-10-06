@@ -138,9 +138,9 @@ create table if not exists public.expenses (
   updated_at timestamptz not null default now(),
   check (installment_number is null or installment_number <= installments),
   foreign key (workspace_id, category_id)
-    references public.categories(workspace_id, id) on delete set null,
+    references public.categories(workspace_id, id) on delete restrict,
   foreign key (workspace_id, credit_card_id)
-    references public.credit_cards(workspace_id, id) on delete set null
+    references public.credit_cards(workspace_id, id) on delete restrict
 );
 
 create table if not exists public.incomes (
@@ -157,7 +157,7 @@ create table if not exists public.incomes (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   foreign key (workspace_id, category_id)
-    references public.categories(workspace_id, id) on delete set null
+    references public.categories(workspace_id, id) on delete restrict
 );
 
 create table if not exists public.payables (
@@ -174,7 +174,7 @@ create table if not exists public.payables (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   foreign key (workspace_id, category_id)
-    references public.categories(workspace_id, id) on delete set null
+    references public.categories(workspace_id, id) on delete restrict
 );
 
 create table if not exists public.category_budgets (
@@ -234,7 +234,7 @@ create table if not exists public.recurring_transactions (
   updated_at timestamptz not null default now(),
   check (ends_on is null or ends_on >= next_date),
   foreign key (workspace_id, category_id)
-    references public.categories(workspace_id, id) on delete set null
+    references public.categories(workspace_id, id) on delete restrict
 );
 
 -- ---------------------------------------------------------------------------
@@ -245,7 +245,7 @@ create table if not exists private.workspace_invites (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.workspaces(id) on delete cascade,
   email text not null,
-  role public.workspace_role not null default 'member',
+  role public.workspace_role not null default 'member' check (role in ('admin', 'member')),
   token_hash text not null unique,
   invited_by uuid not null references auth.users(id),
   expires_at timestamptz not null,
