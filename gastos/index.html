@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Gastos · VisionMoneyPro</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body data-transaction-kind="expense">
+  <div class="dash-shell">
+    <aside class="sidebar">
+      <a class="brand" href="../"><span class="brand-mark">V</span><strong>VisionMoneyPro</strong></a>
+      <nav>
+        <a href="../dashboard/">Visão geral</a>
+        <a class="active" href="../gastos/">Gastos</a>
+        <a class="" href="../receitas/">Receitas</a>
+        <span>Planejamento</span>
+        <span>Metas</span>
+        <a href="../onboarding/">Configurar espaço</a>
+      </nav>
+    </aside>
+
+    <main class="dash-main">
+      <header class="dash-head">
+        <div>
+          <p class="eyebrow">DESPESAS</p>
+          <h1>Gastos</h1>
+          <p class="muted dashboard-subtitle">Cadastre, filtre, edite e acompanhe seus lançamentos.</p>
+        </div>
+        <a class="btn ghost" href="../dashboard/">Voltar ao dashboard</a>
+      </header>
+
+      <section class="finance-grid">
+        <article class="panel transaction-editor">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">LANÇAMENTO</p>
+              <h2 id="editor-title">Novo gasto</h2>
+            </div>
+            <span class="pill">Local</span>
+          </div>
+
+          <form id="transaction-form" class="transaction-form">
+            <input type="hidden" id="transaction-id">
+
+            <label class="field-wide">Descrição
+              <input id="transaction-description" maxlength="180" placeholder="Ex.: Supermercado" required>
+            </label>
+
+            <label>Valor
+              <input id="transaction-amount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0,00" required>
+            </label>
+
+            <label>Data
+              <input id="transaction-date" type="date" required>
+            </label>
+
+            <label>Categoria
+              <select id="transaction-category"></select>
+            </label>
+
+            <label class="field-wide">Observação
+              <textarea id="transaction-notes" maxlength="500" rows="3" placeholder="Opcional"></textarea>
+            </label>
+
+            <div class="form-actions field-wide">
+              <button class="btn primary" id="submit-transaction" type="submit">Salvar gasto</button>
+              <button class="btn ghost" id="cancel-edit" type="button" hidden>Cancelar edição</button>
+            </div>
+          </form>
+        </article>
+
+        <aside class="finance-summary">
+          <article class="metric accent">
+            <span>Total filtrado</span>
+            <strong id="filtered-total">R$ 0,00</strong>
+            <small><b id="transaction-count">0</b> lançamento(s) visível(is)</small>
+          </article>
+          <article class="metric">
+            <span>Total deste mês</span>
+            <strong id="month-total">R$ 0,00</strong>
+            <small><b id="all-count">0</b> lançamento(s) no histórico</small>
+          </article>
+          <button class="btn ghost seed-button" id="seed-data" type="button">Carregar dados de exemplo</button>
+        </aside>
+      </section>
+
+      <section class="panel transaction-history">
+        <div class="section-head history-head">
+          <div><p class="eyebrow">HISTÓRICO</p><h2>Seus lançamentos</h2></div>
+          <div class="filters">
+            <input id="transaction-search" type="search" placeholder="Buscar...">
+            <select id="category-filter"><option value="">Todas as categorias</option></select>
+            <input id="month-filter" type="month">
+          </div>
+        </div>
+        <div id="transaction-empty" class="empty-state" hidden>
+          <strong>Nenhum gasto encontrado.</strong>
+          <span>Cadastre um lançamento acima ou altere os filtros.</span>
+        </div>
+        <div id="transaction-list" class="transaction-list"></div>
+      </section>
+    </main>
+  </div>
+
+  <nav class="mobile-nav">
+    <a href="../dashboard/">Início</a>
+    <a class="active" href="../gastos/">Gastos</a>
+    <a class="" href="../receitas/">Receitas</a>
+    <a href="../onboarding/">Conta</a>
+  </nav>
+
+  <script src="../assets/demo.js"></script>
+  <script src="../assets/transactions.js"></script>
+</body>
+</html>
