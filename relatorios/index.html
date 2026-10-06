@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Relatórios e exportação · VisionMoneyPro</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <div class="dash-shell">
+    <aside class="sidebar">
+      <a class="brand" href="../"><span class="brand-mark">V</span><strong>VisionMoneyPro</strong></a>
+      <nav>
+        <a href="../dashboard/">Visão geral</a>
+        <a href="../movimentacoes/">Movimentações</a>
+        <a href="../planejamento/">Planejamento</a>
+        <a class="active" href="../analises/">Análises</a>
+        <a href="../configuracoes/">Configurações</a>
+      </nav>
+    </aside>
+
+    <main class="dash-main report-main">
+      <header class="dash-head report-header">
+        <div>
+          <p class="eyebrow">RELATÓRIOS</p>
+          <h1>Exportação e visão consolidada</h1>
+          <p class="muted dashboard-subtitle">Escolha o período, confira os números e exporte seus dados em CSV.</p>
+        </div>
+        <div class="header-actions report-actions">
+          <button class="btn ghost" id="print-report" type="button">Imprimir / salvar PDF</button>
+          <a class="btn ghost" href="../analises/">Voltar às análises</a>
+        </div>
+      </header>
+
+      <section class="panel report-filter-panel">
+        <div class="report-filters">
+          <label>De
+            <input id="report-start" type="date">
+          </label>
+          <label>Até
+            <input id="report-end" type="date">
+          </label>
+          <button class="btn primary" id="apply-report-range" type="button">Atualizar relatório</button>
+        </div>
+      </section>
+
+      <section class="metric-grid report-metrics">
+        <article class="metric income-metric"><span>Receitas</span><strong id="report-income">R$ 0,00</strong><small id="report-income-count">0 lançamento(s)</small></article>
+        <article class="metric"><span>Despesas</span><strong id="report-expense">R$ 0,00</strong><small id="report-expense-count">0 lançamento(s)</small></article>
+        <article class="metric accent"><span>Resultado</span><strong id="report-balance">R$ 0,00</strong><small>Receitas menos despesas</small></article>
+        <article class="metric"><span>Taxa de economia</span><strong id="report-saving">0%</strong><small>Percentual preservado</small></article>
+      </section>
+
+      <section class="report-grid">
+        <article class="panel">
+          <p class="eyebrow">CATEGORIAS</p>
+          <h2>Despesas no período</h2>
+          <div id="report-categories" class="analysis-list"></div>
+          <div id="report-categories-empty" class="mini-empty" hidden>Sem despesas no período.</div>
+        </article>
+
+        <article class="panel report-export-panel">
+          <p class="eyebrow">EXPORTAR</p>
+          <h2>Baixar seus dados</h2>
+          <p class="muted">Os arquivos são gerados no navegador. O CSV de movimentações usa as mesmas colunas do modelo de importação e pode ser reimportado.</p>
+          <div class="report-export-actions">
+            <button class="btn secondary" id="export-transactions" type="button">Movimentações (.csv)</button>
+            <button class="btn ghost" id="export-monthly" type="button">Resumo mensal (.csv)</button>
+            <button class="btn ghost" id="export-payables" type="button">Contas a pagar (.csv)</button>
+            <button class="btn ghost" id="export-transfers" type="button">Transferências (.csv)</button>
+          </div>
+        </article>
+      </section>
+
+      <section class="panel report-monthly-panel">
+        <div class="section-head">
+          <div><p class="eyebrow">EVOLUÇÃO</p><h2>Resumo por mês</h2></div>
+          <span class="pill" id="report-period-label">Período</span>
+        </div>
+        <div class="report-table-wrap">
+          <table class="report-table">
+            <thead><tr><th>Mês</th><th>Receitas</th><th>Despesas</th><th>Resultado</th><th>Economia</th></tr></thead>
+            <tbody id="report-monthly-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel report-print-note">
+        <p class="eyebrow">RELATÓRIO LOCAL</p>
+        <p class="muted">Este relatório usa somente os dados armazenados neste navegador durante a fase de demonstração.</p>
+      </section>
+    </main>
+  </div>
+
+  <nav class="mobile-nav compact-mobile-nav">
+    <a href="../dashboard/"><span>⌂</span>Início</a>
+    <a href="../movimentacoes/"><span>↕</span>Movimentos</a>
+    <a href="../planejamento/"><span>◫</span>Planejar</a>
+    <a class="active" href="../analises/"><span>⌁</span>Análises</a>
+    <a href="../configuracoes/"><span>⚙</span>Ajustes</a>
+  </nav>
+
+  <script src="../assets/demo.js"></script>
+  <script src="../assets/reports.js"></script>
+</body>
+</html>
