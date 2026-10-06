@@ -13,7 +13,9 @@
       <nav>
         <a href="../dashboard/">Visão geral</a>
         <a class="active" href="../gastos/">Gastos</a>
-        <a class="" href="../receitas/">Receitas</a>
+        <a href="../receitas/">Receitas</a>
+        <a href="../cartoes/">Cartões e faturas</a>
+        <a href="../contas-a-pagar/">Contas a pagar</a>
         <a href="../planejamento/">Planejamento</a>
         <a href="../metas/">Metas</a>
         <a href="../onboarding/">Configurar espaço</a>
@@ -57,6 +59,11 @@
 
             <label>Categoria
               <select id="transaction-category"></select>
+            </label>
+
+            <label>Cartão de crédito
+              <select id="transaction-card"></select>
+              <small class="field-helper" id="card-helper"></small>
             </label>
 
             <label class="field-wide">Observação
