@@ -81,6 +81,40 @@
           <div id="cards-list" class="cards-list"></div>
         </section>
       </section>
+
+      <section class="cards-extra-grid">
+        <article class="panel installment-management-panel">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">PARCELAMENTOS</p>
+              <h2>Compras parceladas</h2>
+            </div>
+            <select id="installment-card-filter" class="card-secondary-select" aria-label="Filtrar parcelamentos por cartão"></select>
+          </div>
+          <p class="muted card-secondary-copy">Acompanhe o total da compra, parcelas já pagas, saldo restante e antecipe parcelas futuras para uma fatura aberta.</p>
+          <div id="installment-groups-empty" class="empty-state compact-empty" hidden>
+            <strong>Nenhuma compra parcelada encontrada.</strong>
+            <span>Compras em 2x ou mais aparecerão agrupadas aqui.</span>
+          </div>
+          <div id="installment-groups" class="installment-groups"></div>
+        </article>
+
+        <article class="panel bill-history-panel">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">HISTÓRICO</p>
+              <h2>Faturas anteriores</h2>
+            </div>
+            <select id="history-card-filter" class="card-secondary-select" aria-label="Selecionar cartão para histórico"></select>
+          </div>
+          <p class="muted card-secondary-copy">Consulte valores, vencimentos, status e a conta usada no pagamento.</p>
+          <div id="bill-history-empty" class="empty-state compact-empty" hidden>
+            <strong>Nenhuma fatura no histórico.</strong>
+            <span>As faturas aparecem conforme compras são lançadas no cartão.</span>
+          </div>
+          <div id="bill-history-list" class="bill-history-list"></div>
+        </article>
+      </section>
     </main>
   </div>
 
