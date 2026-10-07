@@ -98,6 +98,7 @@
       installmentNumber: Number(input?.installmentNumber || 0) || null,
       installments: Number(input?.installments || 0) || null,
       originalAmount: normalizeMoney(input?.originalAmount || 0) || null,
+      forcedBillMonth: /^\d{4}-\d{2}$/.test(String(input?.forcedBillMonth || "")) ? String(input.forcedBillMonth) : "",
       importFingerprint: String(input?.importFingerprint || "").trim().slice(0, 240),
       importBatchId: String(input?.importBatchId || "").trim().slice(0, 120),
       createdAt: input?.createdAt || new Date().toISOString(),
@@ -132,6 +133,9 @@
   }
 
   function cardBillMonthForExpense(expense, card) {
+    if (/^\d{4}-\d{2}$/.test(String(expense?.forcedBillMonth || ""))) {
+      return String(expense.forcedBillMonth);
+    }
     const [year, month, day] = String(expense.date || currentDate()).split("-").map(Number);
     const closingDay = Number(card?.closingDay || 1);
     const dueDay = Number(card?.dueDay || 1);
@@ -670,6 +674,106 @@
       }
 
       return created;
+    },
+
+
+    getInstallmentGroup(groupId) {
+      const items = getCollection("expense")
+        .filter(item => item.installmentGroupId === groupId)
+        .sort((a, b) => Number(a.installmentNumber || 0) - Number(b.installmentNumber || 0));
+      if (!items.length) return null;
+
+      const card = this.getCard(items[0].cardId);
+      const installments = Number(items[0].installments || items.length);
+      const originalAmount = Number(items[0].originalAmount || items.reduce((sum,item)=>sum+Number(item.amount||0),0));
+      const details = items.map(item => {
+        const billMonth = card ? cardBillMonthForExpense(item, card) : "";
+        const payment = card && billMonth ? this.getBillPayment(card.id, billMonth) : null;
+        return { ...item, billMonth, paid: Boolean(payment) };
+      });
+      const paidCount = details.filter(item => item.paid).length;
+      const openItems = details.filter(item => !item.paid);
+
+      return {
+        id: groupId,
+        cardId: items[0].cardId,
+        description: items[0].description,
+        category: items[0].category,
+        installments,
+        originalAmount: Math.round(originalAmount * 100) / 100,
+        items: details,
+        paidCount,
+        openCount: openItems.length,
+        remainingAmount: Math.round(openItems.reduce((sum,item)=>sum+Number(item.amount||0),0)*100)/100,
+        nextOpenBillMonth: openItems.map(item=>item.billMonth).filter(Boolean).sort()[0] || ""
+      };
+    },
+
+    getInstallmentGroups(cardId = "") {
+      const groupIds = [...new Set(
+        getCollection("expense")
+          .filter(item => item.installmentGroupId && (!cardId || item.cardId === cardId))
+          .map(item => item.installmentGroupId)
+      )];
+
+      return groupIds
+        .map(id => this.getInstallmentGroup(id))
+        .filter(Boolean)
+        .sort((a,b) =>
+          String(a.nextOpenBillMonth || "9999-99").localeCompare(String(b.nextOpenBillMonth || "9999-99")) ||
+          String(a.description).localeCompare(String(b.description), "pt-BR")
+        );
+    },
+
+    anticipateInstallments(groupId, targetBillMonth) {
+      const group = this.getInstallmentGroup(groupId);
+      if (!group) throw new Error("installment_group_not_found");
+      const card = this.getCard(group.cardId);
+      if (!card) throw new Error("card_required");
+      const target = /^\d{4}-\d{2}$/.test(String(targetBillMonth || ""))
+        ? String(targetBillMonth)
+        : currentMonth();
+
+      if (this.getBillPayment(card.id, target)) throw new Error("target_bill_paid");
+
+      const expenses = getCollection("expense");
+      let count = 0;
+      let amount = 0;
+
+      expenses.forEach(item => {
+        if (item.installmentGroupId !== groupId) return;
+        const currentBill = cardBillMonthForExpense(item, card);
+        const payment = this.getBillPayment(card.id, currentBill);
+        if (payment || currentBill <= target) return;
+
+        item.forcedBillMonth = target;
+        item.updatedAt = new Date().toISOString();
+        count += 1;
+        amount += Number(item.amount || 0);
+      });
+
+      if (!count) throw new Error("no_installments_to_anticipate");
+      saveCollection("expense", expenses);
+      return { count, amount: Math.round(amount * 100) / 100, targetBillMonth: target };
+    },
+
+    getCardBillHistory(cardId, limit = 12) {
+      const card = this.getCard(cardId);
+      if (!card) return [];
+
+      const months = new Set();
+      getCollection("expense")
+        .filter(item => item.cardId === cardId)
+        .forEach(item => months.add(cardBillMonthForExpense(item, card)));
+      getArray(CARD_BILL_PAYMENTS_KEY)
+        .filter(item => item.cardId === cardId)
+        .forEach(item => months.add(item.billMonth));
+
+      return [...months]
+        .filter(month => /^\d{4}-\d{2}$/.test(month))
+        .sort((a,b)=>b.localeCompare(a))
+        .slice(0, Math.max(1, Number(limit) || 12))
+        .map(month => this.getCardBill(cardId, month));
     },
 
     getBillPayment(cardId, billMonth) {
