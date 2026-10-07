@@ -770,7 +770,7 @@
         .forEach(item => months.add(item.billMonth));
 
       return [...months]
-        .filter(month => /^\d{4}-\d{2}$/.test(month))
+        .filter(month => /^\d{4}-\d{2}$/.test(month) && month <= currentMonth())
         .sort((a,b)=>b.localeCompare(a))
         .slice(0, Math.max(1, Number(limit) || 12))
         .map(month => this.getCardBill(cardId, month));
