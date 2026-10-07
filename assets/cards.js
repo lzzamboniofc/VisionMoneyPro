@@ -5,6 +5,12 @@
   const empty = document.getElementById("cards-empty");
   const monthInput = document.getElementById("bill-month");
   const cardId = document.getElementById("card-id");
+  const installmentFilter = document.getElementById("installment-card-filter");
+  const installmentList = document.getElementById("installment-groups");
+  const installmentEmpty = document.getElementById("installment-groups-empty");
+  const historyFilter = document.getElementById("history-card-filter");
+  const historyList = document.getElementById("bill-history-list");
+  const historyEmpty = document.getElementById("bill-history-empty");
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -54,6 +60,100 @@
 
   function statusLabel(status) {
     return status === "paid" ? "Paga" : status === "overdue" ? "Atrasada" : "Aberta";
+  }
+
+  function populateSecondaryFilters(cards) {
+    const options = cards.map(card => `<option value="${card.id}">${escapeHtml(card.name)}</option>`).join("");
+    const previousInstallment = installmentFilter.value;
+    const previousHistory = historyFilter.value;
+    installmentFilter.innerHTML = '<option value="">Todos os cartões</option>' + options;
+    historyFilter.innerHTML = options || '<option value="">Nenhum cartão</option>';
+    if (previousInstallment && cards.some(card => card.id === previousInstallment)) installmentFilter.value = previousInstallment;
+    if (previousHistory && cards.some(card => card.id === previousHistory)) historyFilter.value = previousHistory;
+    else if (cards[0]) historyFilter.value = cards[0].id;
+  }
+
+  function renderInstallments() {
+    const filterCardId = installmentFilter.value;
+    const groups = api.getInstallmentGroups(filterCardId);
+    installmentEmpty.hidden = groups.length > 0;
+
+    installmentList.innerHTML = groups.map(group => {
+      const card = api.getCard(group.cardId);
+      const paidPercent = group.installments > 0 ? Math.round((group.paidCount / group.installments) * 100) : 0;
+      const openMonths = [...new Set(group.items.filter(item => !item.paid).map(item => item.billMonth).filter(Boolean))].sort();
+      const defaultTarget = openMonths[0] || monthInput.value;
+      const canAnticipate = group.items.some(item => !item.paid && item.billMonth > defaultTarget);
+
+      return `
+        <article class="installment-group-card">
+          <div class="installment-group-head">
+            <div>
+              <div class="installment-title-row">
+                <strong>${escapeHtml(group.description)}</strong>
+                <span class="plan-badge plus">${group.installments}x</span>
+              </div>
+              <small>${escapeHtml(card?.name || "Cartão")} · ${escapeHtml(group.category)}</small>
+            </div>
+            <div class="installment-money">
+              <strong>${api.formatCurrency(group.originalAmount)}</strong>
+              <span>${api.formatCurrency(group.remainingAmount)} em aberto</span>
+            </div>
+          </div>
+
+          <div class="installment-progress-copy">
+            <span>${group.paidCount} de ${group.installments} parcela(s) em faturas pagas</span>
+            <strong>${paidPercent}%</strong>
+          </div>
+          <div class="progress-track installment-progress"><span style="width:${Math.min(100,paidPercent)}%"></span></div>
+
+          <div class="installment-timeline">
+            ${group.items.map(item => `
+              <span class="${item.paid ? "paid" : "open"} ${item.forcedBillMonth ? "anticipated" : ""}" title="${item.forcedBillMonth ? "Parcela antecipada" : "Parcela programada"}">
+                <b>${item.installmentNumber}/${item.installments}</b>
+                <small>${api.formatMonth(item.billMonth)}</small>
+                <em>${api.formatCurrency(item.amount)}</em>
+              </span>
+            `).join("")}
+          </div>
+
+          <div class="installment-actions">
+            <label>Antecipar futuras para
+              <input type="month" data-anticipate-month="${group.id}" value="${defaultTarget}">
+            </label>
+            <button class="btn secondary" type="button" data-anticipate-group="${group.id}" ${canAnticipate ? "" : "disabled"}>
+              ${canAnticipate ? "Antecipar parcelas futuras" : (group.openCount ? "Sem parcelas futuras" : "Parcelamento quitado")}
+            </button>
+          </div>
+        </article>
+      `;
+    }).join("");
+  }
+
+  function renderHistory() {
+    const cardIdValue = historyFilter.value;
+    const history = cardIdValue ? api.getCardBillHistory(cardIdValue, 18) : [];
+    historyEmpty.hidden = history.length > 0;
+    historyList.innerHTML = history.map(bill => {
+      const paymentAccount = bill.payment ? api.getAccount(bill.payment.accountId) : null;
+      return `
+        <article class="bill-history-row">
+          <div class="bill-history-month">
+            <strong>${api.formatMonth(bill.month)}</strong>
+            <span>Vence ${api.formatDate(bill.dueDate)}</span>
+          </div>
+          <div class="bill-history-value">
+            <strong>${api.formatCurrency(bill.total)}</strong>
+            <span>${bill.items.length} compra(s)</span>
+          </div>
+          <div class="bill-history-status">
+            <span class="status-badge ${bill.status === "paid" ? "paid" : bill.status === "overdue" ? "overdue" : "pending"}">${statusLabel(bill.status)}</span>
+            ${bill.payment ? `<small>Pago com ${escapeHtml(paymentAccount?.name || "Conta")}</small>` : ""}
+          </div>
+          <button class="text-action" type="button" data-open-bill-month="${bill.month}">Abrir fatura</button>
+        </article>
+      `;
+    }).join("");
   }
 
   function render() {
@@ -125,6 +225,7 @@
                     <small>
                       ${api.formatDate(item.date)} · ${escapeHtml(item.category)}
                       ${item.installments && item.installmentNumber ? " · parcela " + item.installmentNumber + "/" + item.installments : ""}
+                      ${item.forcedBillMonth ? " · antecipada" : ""}
                     </small>
                   </div>
                   <strong>${api.formatCurrency(item.amount)}</strong>
@@ -171,6 +272,10 @@
     document.querySelectorAll("[data-bill-account]").forEach(select => {
       if (accounts.defaultId) select.value = accounts.defaultId;
     });
+
+    populateSecondaryFilters(activeCards);
+    renderInstallments();
+    renderHistory();
   }
 
   form.addEventListener("submit", event => {
@@ -194,6 +299,8 @@
 
   document.getElementById("cancel-card-edit").addEventListener("click", resetForm);
   monthInput.addEventListener("input", render);
+  installmentFilter.addEventListener("input", renderInstallments);
+  historyFilter.addEventListener("input", renderHistory);
 
   list.addEventListener("click", event => {
     const edit = event.target.closest("[data-edit-card]");
@@ -231,6 +338,39 @@
       api.reopenCardBill(reopen.dataset.reopenBill, monthInput.value);
       render();
     }
+  });
+
+  installmentList.addEventListener("click", event => {
+    const button = event.target.closest("[data-anticipate-group]");
+    if (!button) return;
+    const groupId = button.dataset.anticipateGroup;
+    const input = installmentList.querySelector('[data-anticipate-month="' + CSS.escape(groupId) + '"]');
+    const targetMonth = input?.value || monthInput.value;
+
+    if (!window.confirm("Antecipar todas as parcelas futuras em aberto deste parcelamento para " + api.formatMonth(targetMonth) + "?")) return;
+
+    try {
+      const result = api.anticipateInstallments(groupId, targetMonth);
+      window.alert(result.count + " parcela(s), totalizando " + api.formatCurrency(result.amount) + ", foram movidas para " + api.formatMonth(result.targetBillMonth) + ".");
+      monthInput.value = result.targetBillMonth;
+      render();
+    } catch (error) {
+      if (error?.message === "target_bill_paid") {
+        window.alert("A fatura escolhida já está paga. Selecione uma fatura aberta.");
+      } else if (error?.message === "no_installments_to_anticipate") {
+        window.alert("Não há parcelas futuras em aberto para antecipar para esse mês.");
+      } else {
+        window.alert("Não foi possível antecipar as parcelas.");
+      }
+    }
+  });
+
+  historyList.addEventListener("click", event => {
+    const button = event.target.closest("[data-open-bill-month]");
+    if (!button) return;
+    monthInput.value = button.dataset.openBillMonth;
+    render();
+    document.querySelector(".cards-layout")?.scrollIntoView({ behavior:"smooth", block:"start" });
   });
 
   monthInput.value = new Date().toISOString().slice(0, 7);
